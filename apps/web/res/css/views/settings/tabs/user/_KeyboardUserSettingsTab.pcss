@@ -74,6 +74,24 @@ Please see LICENSE files in the repository root for full details.
     color: $secondary-content;
 }
 
+.mx_KeyboardShortcut_globalToggle {
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid $quinary-content;
+
+    &[data-active="true"] {
+        background-color: $accent;
+        color: $background;
+        border-color: $accent;
+    }
+
+    &[aria-disabled="true"] {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
 .mx_KeyboardShortcut_conflict {
     flex: 1 1 100%;
     font-size: 12px;

@@ -13,7 +13,9 @@ import { type KeyBindingAction } from "../../../accessibility/KeyboardShortcuts"
 import {
     captureCombo,
     clearUserShortcutOverride,
+    comboCanBeGlobal,
     findConflicts,
+    setShortcutGlobal,
     setUserShortcutOverride,
 } from "../../../accessibility/KeyboardShortcutsCustomization";
 import { getKeyboardShortcutDisplayName } from "../../../accessibility/KeyboardShortcutUtils";
@@ -26,6 +28,10 @@ interface IProps {
     combo: KeyCombo;
     /** True when the user has set an override for this action. Controls reset visibility. */
     isOverridden: boolean;
+    /** True when this shortcut is currently flagged for OS-level global registration. */
+    isGlobal: boolean;
+    /** True when the action is allowed to be made global (desktop build + per-action allow-list). */
+    globalEligible: boolean;
     /** Resolved combos for every editable action in the same category. Used for conflict detection. */
     siblingCombos: Partial<Record<KeyBindingAction, KeyCombo>>;
     /** Translated display label rendered by the parent. */
@@ -38,6 +44,8 @@ export const KeyboardShortcutEditor: React.FC<IProps> = ({
     action,
     combo,
     isOverridden,
+    isGlobal,
+    globalEligible,
     siblingCombos,
     displayName,
     onChange,
@@ -64,10 +72,13 @@ export const KeyboardShortcutEditor: React.FC<IProps> = ({
             if (!next) return; // Modifier-only — keep listening.
 
             await setUserShortcutOverride(action, next);
+            // If the action was previously global but the new combo can't be globalised safely,
+            // drop the global flag so we don't keep a dangling unregistered hotkey.
+            if (isGlobal && !comboCanBeGlobal(next)) await setShortcutGlobal(action, false);
             setRecording(false);
             onChange();
         },
-        [action, onChange],
+        [action, isGlobal, onChange],
     );
 
     const handleReset = useCallback(async (): Promise<void> => {
@@ -75,7 +86,13 @@ export const KeyboardShortcutEditor: React.FC<IProps> = ({
         onChange();
     }, [action, onChange]);
 
+    const handleGlobalToggle = useCallback(async (): Promise<void> => {
+        await setShortcutGlobal(action, !isGlobal);
+        onChange();
+    }, [action, isGlobal, onChange]);
+
     const conflicts = !recording ? findConflicts(action, combo, siblingCombos) : [];
+    const canGlobalise = globalEligible && comboCanBeGlobal(combo);
 
     return (
         <li className="mx_KeyboardShortcut_shortcutRow">
@@ -103,6 +120,23 @@ export const KeyboardShortcutEditor: React.FC<IProps> = ({
                         aria-label={_t("settings|keyboard|click_to_rebind")}
                     >
                         <KeyboardShortcut value={combo} />
+                    </AccessibleButton>
+                )}
+                {globalEligible && !recording && (
+                    <AccessibleButton
+                        kind="link_inline"
+                        className="mx_KeyboardShortcut_globalToggle"
+                        data-active={isGlobal}
+                        disabled={!canGlobalise && !isGlobal}
+                        onClick={canGlobalise || isGlobal ? handleGlobalToggle : null}
+                        title={
+                            canGlobalise || isGlobal
+                                ? _t("settings|keyboard|global_toggle_hint")
+                                : _t("settings|keyboard|global_requires_modifier")
+                        }
+                        aria-pressed={isGlobal}
+                    >
+                        {_t(isGlobal ? "settings|keyboard|global_on" : "settings|keyboard|global_off")}
                     </AccessibleButton>
                 )}
                 {isOverridden && !recording && (

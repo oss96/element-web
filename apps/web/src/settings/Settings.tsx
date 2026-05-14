@@ -275,6 +275,7 @@ export interface Settings {
     "showTypingNotifications": IBaseSetting<boolean>;
     "ctrlFForSearch": IBaseSetting<boolean>;
     "Keyboard.userShortcuts": IBaseSetting<Record<string, KeyCombo>>;
+    "Keyboard.globalShortcuts": IBaseSetting<string[]>;
     "MessageComposerInput.ctrlEnterToSend": IBaseSetting<boolean>;
     "MessageComposerInput.surroundWith": IBaseSetting<boolean>;
     "MessageComposerInput.autoReplaceEmoji": IBaseSetting<boolean>;
@@ -952,6 +953,10 @@ export const SETTINGS: Settings = {
     "Keyboard.userShortcuts": {
         supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS,
         default: {},
+    },
+    "Keyboard.globalShortcuts": {
+        supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS,
+        default: [],
     },
     "MessageComposerInput.surroundWith": {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,

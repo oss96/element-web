@@ -16,6 +16,7 @@ import {
     type KeyBindingAction,
 } from "../../../../../accessibility/KeyboardShortcuts";
 import { type KeyCombo } from "../../../../../KeyBindingsManager";
+import { IS_ELECTRON } from "../../../../../Keyboard";
 import { _t } from "../../../../../languageHandler";
 import {
     getKeyboardShortcutDisplayName,
@@ -24,6 +25,7 @@ import {
 } from "../../../../../accessibility/KeyboardShortcutUtils";
 import {
     clearAllUserShortcutOverrides,
+    getGlobalShortcutActions,
     getUserShortcutOverrides,
 } from "../../../../../accessibility/KeyboardShortcutsCustomization";
 import { KeyboardShortcut } from "../../KeyboardShortcut";
@@ -39,6 +41,11 @@ const visibleCategories = (Object.entries(CATEGORIES) as [CategoryName, ICategor
     ([categoryName]) => categoryName !== CategoryName.LABS || showLabsFlags(),
 );
 
+// Categories whose actions make sense as OS-level global hotkeys. Anything in COMPOSER
+// or ROOM only matters while Element has focus, so we don't surface the toggle for
+// those rows — globalising Format Bold would be a footgun.
+const GLOBAL_ELIGIBLE_CATEGORIES = new Set<CategoryName>([CategoryName.CALLS, CategoryName.NAVIGATION]);
+
 interface IKeyboardShortcutRowProps {
     name: KeyBindingAction;
     /** Editable rows must receive the resolved combos of their siblings for conflict detection. */
@@ -49,6 +56,12 @@ interface IKeyboardShortcutRowProps {
     editableActions: Set<KeyBindingAction>;
     /** Actions that currently have a user-set override. */
     overriddenActions: Set<KeyBindingAction>;
+    /** Actions currently flagged for OS-level global registration. */
+    globalActions: Set<KeyBindingAction>;
+    /** True when running in the Electron desktop build (global hotkeys only work there). */
+    desktopBuild: boolean;
+    /** Category this row belongs to (drives the global-eligibility filter). */
+    categoryName: CategoryName;
 }
 
 const KeyboardShortcutRow: React.FC<IKeyboardShortcutRowProps> = ({
@@ -57,6 +70,9 @@ const KeyboardShortcutRow: React.FC<IKeyboardShortcutRowProps> = ({
     onChange,
     editableActions,
     overriddenActions,
+    globalActions,
+    desktopBuild,
+    categoryName,
 }) => {
     const displayName = getKeyboardShortcutDisplayName(name);
     const value = getKeyboardShortcutValue(name);
@@ -69,6 +85,8 @@ const KeyboardShortcutRow: React.FC<IKeyboardShortcutRowProps> = ({
                 combo={value}
                 displayName={displayName}
                 isOverridden={overriddenActions.has(name)}
+                isGlobal={globalActions.has(name)}
+                globalEligible={desktopBuild && GLOBAL_ELIGIBLE_CATEGORIES.has(categoryName)}
                 siblingCombos={siblingCombos}
                 onChange={onChange}
             />
@@ -88,6 +106,8 @@ interface IKeyboardShortcutSectionProps {
     category: ICategory;
     editableActions: Set<KeyBindingAction>;
     overriddenActions: Set<KeyBindingAction>;
+    globalActions: Set<KeyBindingAction>;
+    desktopBuild: boolean;
     onChange: () => void;
 }
 
@@ -96,6 +116,8 @@ const KeyboardShortcutSection: React.FC<IKeyboardShortcutSectionProps> = ({
     category,
     editableActions,
     overriddenActions,
+    globalActions,
+    desktopBuild,
     onChange,
 }) => {
     if (!category.categoryLabel) return null;
@@ -117,6 +139,9 @@ const KeyboardShortcutSection: React.FC<IKeyboardShortcutSectionProps> = ({
                         name={shortcutName}
                         editableActions={editableActions}
                         overriddenActions={overriddenActions}
+                        globalActions={globalActions}
+                        desktopBuild={desktopBuild}
+                        categoryName={categoryName}
                         siblingCombos={siblingCombos}
                         onChange={onChange}
                     />
@@ -136,8 +161,10 @@ const KeyboardUserSettingsTab: React.FC = () => {
     // Recomputed each render so it picks up override changes triggered via setRevision.
     const editableActions = new Set(Object.keys(getKeyboardShortcuts()) as KeyBindingAction[]);
     const overriddenActions = new Set(Object.keys(getUserShortcutOverrides()) as KeyBindingAction[]);
+    const globalActions = new Set(getGlobalShortcutActions());
 
-    const hasAnyOverride = overriddenActions.size > 0;
+    const desktopBuild = !!IS_ELECTRON;
+    const hasAnyOverride = overriddenActions.size > 0 || globalActions.size > 0;
 
     const handleResetAll = useCallback(async () => {
         await clearAllUserShortcutOverrides();
@@ -161,6 +188,8 @@ const KeyboardUserSettingsTab: React.FC = () => {
                         category={category}
                         editableActions={editableActions}
                         overriddenActions={overriddenActions}
+                        globalActions={globalActions}
+                        desktopBuild={desktopBuild}
                         onChange={onChange}
                     />
                 ))}

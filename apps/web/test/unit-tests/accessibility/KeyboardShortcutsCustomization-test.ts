@@ -7,8 +7,10 @@ Please see LICENSE files in the repository root for full details.
 
 import {
     captureCombo,
+    comboCanBeGlobal,
     combosEqual,
     findConflicts,
+    toElectronAccelerator,
 } from "../../../src/accessibility/KeyboardShortcutsCustomization";
 import { KeyBindingAction } from "../../../src/accessibility/KeyboardShortcuts";
 import { type KeyCombo } from "../../../src/KeyBindingsManager";
@@ -107,6 +109,53 @@ describe("KeyboardShortcutsCustomization", () => {
                 [KeyBindingAction.ToggleWebcamInCall]: callsCombo,
             };
             expect(findConflicts(KeyBindingAction.FormatCode, callsCombo, siblings)).toEqual([]);
+        });
+    });
+
+    describe("comboCanBeGlobal", () => {
+        // We refuse to globally register combos that would steal everyday typing keys.
+        it.each([
+            [{ key: "a" }, false],
+            [{ key: "a", shiftKey: true }, false],
+            [{ key: "Enter" }, false],
+        ])("returns false for plain/Shift-only combos (%j)", (combo, expected) => {
+            expect(comboCanBeGlobal(combo)).toBe(expected);
+        });
+
+        it.each([
+            [{ key: "m", ctrlKey: true, shiftKey: true }],
+            [{ key: "d", altKey: true }],
+            [{ key: "k", ctrlOrCmdKey: true }],
+            [{ key: "p", metaKey: true }],
+        ])("returns true once a non-Shift modifier is present (%j)", (combo) => {
+            expect(comboCanBeGlobal(combo)).toBe(true);
+        });
+
+        it("treats F13-F24 as globally safe even without a modifier", () => {
+            expect(comboCanBeGlobal({ key: "F13" })).toBe(true);
+            expect(comboCanBeGlobal({ key: "F24" })).toBe(true);
+            // F12 is not in the safe range — it's commonly bound by browsers and OS.
+            expect(comboCanBeGlobal({ key: "F12" })).toBe(false);
+        });
+    });
+
+    describe("toElectronAccelerator", () => {
+        it("returns null for combos that can't be safely globalised", () => {
+            expect(toElectronAccelerator({ key: "a" })).toBeNull();
+        });
+
+        it("uppercases single letters and joins modifiers with +", () => {
+            expect(toElectronAccelerator({ key: "m", ctrlKey: true, shiftKey: true })).toBe(
+                "Control+Shift+M",
+            );
+        });
+
+        it("uses CommandOrControl for ctrlOrCmdKey combos", () => {
+            expect(toElectronAccelerator({ key: "k", ctrlOrCmdKey: true })).toBe("CommandOrControl+K");
+        });
+
+        it("passes function keys through unchanged", () => {
+            expect(toElectronAccelerator({ key: "F13" })).toBe("F13");
         });
     });
 });

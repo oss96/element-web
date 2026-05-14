@@ -15,6 +15,7 @@ import { ModuleLoader } from "@element-hq/element-web-module-api";
 
 import * as languageHandler from "../languageHandler";
 import SettingsStore from "../settings/SettingsStore";
+import { startGlobalShortcutsBridge } from "../accessibility/GlobalShortcutsBridge";
 import PlatformPeg from "../PlatformPeg";
 import SdkConfig from "../SdkConfig";
 import { setTheme } from "../theme";
@@ -40,6 +41,9 @@ export function preparePlatform(): void {
         logger.log("Using Web platform");
         PlatformPeg.set(new WebPlatform());
     }
+    // No-op on non-Electron builds; otherwise pushes the user's global hotkey
+    // selection to the main process and wires up dispatch back into the renderer.
+    startGlobalShortcutsBridge();
 }
 
 export function setupLogStorage(): Promise<void> {

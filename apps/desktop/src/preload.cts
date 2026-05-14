@@ -33,6 +33,8 @@ const CHANNELS = [
     "homeserverUrl",
     "serverSupportedVersions",
     "showToast",
+    "setGlobalShortcuts",
+    "globalShortcutFired",
 ];
 
 contextBridge.exposeInMainWorld("electron", {

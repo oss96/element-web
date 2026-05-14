@@ -34,6 +34,7 @@ import "./ipc.js";
 import "./seshat.js";
 import "./settings.js";
 import "./badge.js";
+import { releaseGlobalShortcuts } from "./globalShortcuts.js";
 import * as tray from "./tray.js";
 import Store from "./store.js";
 import { buildMenuTemplate } from "./vectormenu.js";
@@ -561,6 +562,7 @@ app.on("activate", () => {
 function beforeQuit(): void {
     global.appQuitting = true;
     global.mainWindow?.webContents.send("before-quit");
+    releaseGlobalShortcuts();
 }
 
 app.on("before-quit", beforeQuit);
