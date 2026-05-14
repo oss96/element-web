@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR GPL-3.0-only OR LicenseRef-Element-Com
 Please see LICENSE files in the repository root for full details.
 */
 
-import React, { type JSX, useCallback, useEffect, useRef, useState } from "react";
+import React, { type JSX, useCallback, useEffect, useState } from "react";
 
 import { type KeyCombo } from "../../../KeyBindingsManager";
 import { _t } from "../../../languageHandler";
@@ -51,35 +51,40 @@ export const KeyboardShortcutEditor: React.FC<IProps> = ({
     onChange,
 }): JSX.Element => {
     const [recording, setRecording] = useState(false);
-    const recorderRef = useRef<HTMLDivElement | null>(null);
 
+    // We listen on document at the capture phase rather than on the recorder element.
+    // AccessibleButton's wrapping onKeyDown matches against the accessibility binding set
+    // and can hijack Enter/Space and other action keys; pressing modifier keys also tends
+    // to lose focus on the wrapped div. A document-level listener sidesteps both issues
+    // and catches Shift+Numpad and multi-modifier presses reliably on Windows.
     useEffect(() => {
-        if (recording) recorderRef.current?.focus();
-    }, [recording]);
+        if (!recording) return;
 
-    const handleKeyDown = useCallback(
-        async (ev: React.KeyboardEvent<HTMLDivElement>): Promise<void> => {
+        const handler = (ev: KeyboardEvent): void => {
             ev.preventDefault();
             ev.stopPropagation();
 
-            // Plain Escape cancels recording without saving.
             if (ev.key === "Escape" && !ev.ctrlKey && !ev.altKey && !ev.shiftKey && !ev.metaKey) {
                 setRecording(false);
                 return;
             }
 
             const next = captureCombo(ev);
-            if (!next) return; // Modifier-only — keep listening.
+            if (!next) return; // Modifier-only — keep listening for the real key.
 
-            await setUserShortcutOverride(action, next);
-            // If the action was previously global but the new combo can't be globalised safely,
-            // drop the global flag so we don't keep a dangling unregistered hotkey.
-            if (isGlobal && !comboCanBeGlobal(next)) await setShortcutGlobal(action, false);
-            setRecording(false);
-            onChange();
-        },
-        [action, isGlobal, onChange],
-    );
+            void (async () => {
+                await setUserShortcutOverride(action, next);
+                if (isGlobal && !comboCanBeGlobal(next)) {
+                    await setShortcutGlobal(action, false);
+                }
+                setRecording(false);
+                onChange();
+            })();
+        };
+
+        document.addEventListener("keydown", handler, true);
+        return () => document.removeEventListener("keydown", handler, true);
+    }, [recording, action, isGlobal, onChange]);
 
     const handleReset = useCallback(async (): Promise<void> => {
         await clearUserShortcutOverride(action);
@@ -99,18 +104,15 @@ export const KeyboardShortcutEditor: React.FC<IProps> = ({
             <span className="mx_KeyboardShortcut_shortcutLabel">{displayName}</span>
             <div className="mx_KeyboardShortcut_shortcutControls">
                 {recording ? (
-                    <AccessibleButton
-                        element="div"
-                        kind="secondary"
+                    <div
                         className="mx_KeyboardShortcut_recording"
-                        onClick={() => setRecording(false)}
-                        onKeyDown={handleKeyDown}
-                        tabIndex={0}
-                        ref={recorderRef}
+                        role="status"
+                        aria-live="polite"
                         aria-label={_t("settings|keyboard|press_key_combination")}
+                        onClick={() => setRecording(false)}
                     >
                         {_t("settings|keyboard|press_key_combination")}
-                    </AccessibleButton>
+                    </div>
                 ) : (
                     <AccessibleButton
                         kind="link_inline"
