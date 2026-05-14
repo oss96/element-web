@@ -438,9 +438,12 @@ export const KEYBOARD_SHORTCUTS: IKeyboardShortcuts = {
         displayName: _td("keyboard|toggle_webcam_mute"),
     },
     [KeyBindingAction.ToggleIncomingAudioInCall]: {
+        // Ctrl/Cmd+Alt+D, not Ctrl/Cmd+Shift+D: the Shift variant collides with
+        // ToggleSpacePanel, which lives in NAVIGATION so the in-app conflict
+        // matcher (single-category only) never surfaced the clash.
         default: {
             ctrlOrCmdKey: true,
-            shiftKey: true,
+            altKey: true,
             key: Key.D,
         },
         displayName: _td("keyboard|toggle_incoming_audio_mute"),
