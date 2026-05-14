@@ -84,6 +84,9 @@ export type KeyBinding = {
  * Note, this method is only exported for testing.
  */
 export function isKeyComboMatch(ev: KeyboardEvent | React.KeyboardEvent, combo: KeyCombo, onMac: boolean): boolean {
+    // An empty `key` is the "cleared" sentinel: the user has explicitly unbound this
+    // shortcut, so no real keypress should ever fire it.
+    if (combo.key === "") return false;
     if (combo.key !== undefined) {
         // A numpad-flagged binding only fires when the physical numpad press it was recorded
         // from is what came in. Conversely, an unflagged combo still matches both numpad and

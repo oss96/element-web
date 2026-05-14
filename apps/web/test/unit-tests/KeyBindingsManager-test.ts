@@ -162,4 +162,17 @@ describe("KeyBindingsManager", () => {
         expect(isKeyComboMatch(mockKeyEvent("k", { metaKey: true, altKey: true }), combo, true)).toBe(true);
         expect(isKeyComboMatch(mockKeyEvent("k", { ctrlKey: true, altKey: true }), combo, true)).toBe(false);
     });
+
+    it("should never match a cleared combo (empty key acts as the unbound sentinel)", () => {
+        // The settings UI lets users explicitly unbind an action — storing { key: "" } as the
+        // override. No real keypress should resurrect that binding.
+        const cleared: KeyCombo = { key: "" };
+        expect(isKeyComboMatch(mockKeyEvent("a"), cleared, false)).toBe(false);
+        expect(isKeyComboMatch(mockKeyEvent("Enter", { ctrlKey: true }), cleared, false)).toBe(false);
+        // Even if the cleared combo carries leftover modifier flags from before it was cleared.
+        const clearedWithMods: KeyCombo = { key: "", ctrlKey: true, shiftKey: true };
+        expect(isKeyComboMatch(mockKeyEvent("a", { ctrlKey: true, shiftKey: true }), clearedWithMods, false)).toBe(
+            false,
+        );
+    });
 });
