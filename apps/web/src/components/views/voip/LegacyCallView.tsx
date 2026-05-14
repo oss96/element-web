@@ -28,6 +28,7 @@ import LegacyCallViewButtons from "./LegacyCallView/LegacyCallViewButtons";
 import { type ActionPayload } from "../../../dispatcher/payloads";
 import { getKeyBindingsManager } from "../../../KeyBindingsManager";
 import { KeyBindingAction } from "../../../accessibility/KeyboardShortcuts";
+import { playIncomingAudioToggleTone, playMicToggleTone } from "../../../audio/CallMuteTones";
 
 interface IProps {
     // The call for us to display
@@ -254,8 +255,10 @@ export default class LegacyCallView extends React.Component<IProps, IState> {
     };
 
     private onMicMuteClick = async (): Promise<void> => {
-        const newVal = !this.state.micMuted;
-        this.setState({ micMuted: await this.props.call.setMicrophoneMuted(newVal) });
+        const prev = this.state.micMuted;
+        const next = await this.props.call.setMicrophoneMuted(!prev);
+        this.setState({ micMuted: next });
+        if (next !== prev) playMicToggleTone(next);
     };
 
     private onVidMuteClick = async (): Promise<void> => {
@@ -303,12 +306,14 @@ export default class LegacyCallView extends React.Component<IProps, IState> {
                 handled = true;
                 break;
 
-            case KeyBindingAction.ToggleIncomingAudioInCall:
-                LegacyCallHandler.instance.toggleIncomingAudioMuted(this.props.call.callId);
+            case KeyBindingAction.ToggleIncomingAudioInCall: {
+                const muted = LegacyCallHandler.instance.toggleIncomingAudioMuted(this.props.call.callId);
+                playIncomingAudioToggleTone(muted);
                 // show the controls to give feedback
                 this.buttonsRef.current?.showControls();
                 handled = true;
                 break;
+            }
         }
 
         if (handled) {
