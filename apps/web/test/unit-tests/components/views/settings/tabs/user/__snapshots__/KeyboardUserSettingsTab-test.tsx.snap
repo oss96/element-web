@@ -99,6 +99,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -133,6 +141,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -175,6 +191,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -216,6 +240,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -250,6 +282,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -286,6 +326,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -320,6 +368,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -356,6 +412,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -391,6 +455,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -419,6 +491,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -449,6 +529,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -477,6 +565,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -519,6 +615,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -560,6 +664,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -594,6 +706,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -651,6 +771,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -685,6 +813,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -726,6 +862,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -809,6 +953,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -837,6 +989,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -873,6 +1033,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -902,6 +1070,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -930,6 +1106,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -966,6 +1150,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -1000,6 +1192,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -1051,6 +1251,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -1079,6 +1287,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -1109,6 +1325,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -1138,6 +1362,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -1166,6 +1398,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -1217,6 +1457,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -1245,6 +1493,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -1280,6 +1536,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -1337,6 +1601,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -1371,6 +1643,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -1413,6 +1693,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -1447,6 +1735,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -1489,6 +1785,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -1523,6 +1827,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -1565,6 +1877,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -1606,6 +1926,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -1640,6 +1968,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -1676,6 +2012,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -1710,6 +2054,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -1751,6 +2103,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>
@@ -1802,6 +2162,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -1831,6 +2199,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                         </kbd>
                       </div>
                     </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
+                    </div>
                   </div>
                 </li>
                 <li
@@ -1859,6 +2235,14 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                            
                         </kbd>
                       </div>
+                    </div>
+                    <div
+                      aria-label="Remove this shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_clearButton mx_AccessibleButton_hasKind mx_AccessibleButton_kind_icon"
+                      role="button"
+                      tabindex="0"
+                    >
+                      ✕
                     </div>
                   </div>
                 </li>

@@ -10,6 +10,7 @@ import {
     comboCanBeGlobal,
     combosEqual,
     findConflicts,
+    isComboCleared,
     toElectronAccelerator,
 } from "../../../src/accessibility/KeyboardShortcutsCustomization";
 import { KeyBindingAction } from "../../../src/accessibility/KeyboardShortcuts";
@@ -191,6 +192,27 @@ describe("KeyboardShortcutsCustomization", () => {
         it("emits the matching alias for numpad operators (numadd/numsub/etc.)", () => {
             expect(toElectronAccelerator({ key: "+", numpad: true, ctrlKey: true })).toBe("Control+numadd");
             expect(toElectronAccelerator({ key: "*", numpad: true, ctrlKey: true })).toBe("Control+nummult");
+        });
+    });
+
+    describe("cleared sentinel", () => {
+        it("isComboCleared treats an empty key as cleared", () => {
+            expect(isComboCleared({ key: "" })).toBe(true);
+            // Modifiers without a real key don't count as a real binding either.
+            expect(isComboCleared({ key: "", ctrlKey: true })).toBe(true);
+        });
+
+        it("isComboCleared returns false for a real combo", () => {
+            expect(isComboCleared({ key: "a" })).toBe(false);
+            expect(isComboCleared({ key: "F13" })).toBe(false);
+            expect(isComboCleared(undefined)).toBe(false);
+        });
+
+        it("comboCanBeGlobal refuses a cleared combo even if it has modifiers", () => {
+            // A cleared combo with stray modifier flags would otherwise serialise to a malformed
+            // accelerator like "Control+" — comboCanBeGlobal must veto it before we get there.
+            expect(comboCanBeGlobal({ key: "" })).toBe(false);
+            expect(comboCanBeGlobal({ key: "", ctrlKey: true })).toBe(false);
         });
     });
 });

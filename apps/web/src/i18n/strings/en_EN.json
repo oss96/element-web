@@ -2762,6 +2762,7 @@
             "phrase_strong_enough": "Great! This passphrase looks strong enough"
         },
         "keyboard": {
+            "clear_shortcut": "Remove this shortcut",
             "click_to_rebind": "Click to change shortcut",
             "conflict_warning": "Conflicts with: %(actions)s",
             "dialog_title": "<strong>Settings:</strong> Keyboard",
@@ -2772,7 +2773,8 @@
             "press_key_combination": "Press a key combination…",
             "reset_all": "Reset all shortcuts",
             "reset_to_default": "Reset to default",
-            "title": "Keyboard"
+            "title": "Keyboard",
+            "unbound": "Unbound"
         },
         "labs": {
             "dialog_title": "<strong>Settings:</strong> Labs"

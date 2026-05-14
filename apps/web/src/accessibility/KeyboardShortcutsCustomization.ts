@@ -44,6 +44,23 @@ export const setUserShortcutOverride = async (action: KeyBindingAction, combo: K
     await SettingsStore.setValue(OVERRIDES_SETTING, null, SettingLevel.DEVICE, next);
 };
 
+/**
+ * Mark this action as explicitly unbound. Distinct from clearing the override:
+ * clearing falls back to the factory default, whereas this stores a sentinel
+ * empty-key combo so the matcher refuses to fire on any real keypress.
+ *
+ * Also drops any global registration, since you can't register an empty combo.
+ */
+export const setUserShortcutCleared = async (action: KeyBindingAction): Promise<void> => {
+    await setUserShortcutOverride(action, { key: "" });
+    await setShortcutGlobal(action, false);
+};
+
+/** True when the resolved combo for an action represents an explicit "(unbound)" state. */
+export const isComboCleared = (combo: KeyCombo | undefined): boolean => {
+    return !!combo && combo.key === "";
+};
+
 export const clearUserShortcutOverride = async (action: KeyBindingAction): Promise<void> => {
     const next: KeyboardShortcutOverrides = { ...getUserShortcutOverrides() };
     delete next[action];
@@ -80,6 +97,7 @@ export const setShortcutGlobal = async (action: KeyBindingAction, enabled: boole
  * otherwise be hijacked from every other app on the machine.
  */
 export const comboCanBeGlobal = (combo: KeyCombo): boolean => {
+    if (!combo.key) return false;
     if (SAFE_FUNCTION_KEYS.has(combo.key)) return true;
     return !!(combo.ctrlKey || combo.altKey || combo.metaKey || combo.ctrlOrCmdKey);
 };

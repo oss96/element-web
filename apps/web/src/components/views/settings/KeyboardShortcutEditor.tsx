@@ -15,7 +15,9 @@ import {
     clearUserShortcutOverride,
     comboCanBeGlobal,
     findConflicts,
+    isComboCleared,
     setShortcutGlobal,
+    setUserShortcutCleared,
     setUserShortcutOverride,
 } from "../../../accessibility/KeyboardShortcutsCustomization";
 import { getKeyboardShortcutDisplayName } from "../../../accessibility/KeyboardShortcutUtils";
@@ -91,12 +93,19 @@ export const KeyboardShortcutEditor: React.FC<IProps> = ({
         onChange();
     }, [action, onChange]);
 
+    const handleClear = useCallback(async (): Promise<void> => {
+        await setUserShortcutCleared(action);
+        onChange();
+    }, [action, onChange]);
+
     const handleGlobalToggle = useCallback(async (): Promise<void> => {
         await setShortcutGlobal(action, !isGlobal);
         onChange();
     }, [action, isGlobal, onChange]);
 
-    const conflicts = !recording ? findConflicts(action, combo, siblingCombos) : [];
+    const cleared = isComboCleared(combo);
+    // Conflict detection is meaningless against a cleared combo (no real key fires it).
+    const conflicts = !recording && !cleared ? findConflicts(action, combo, siblingCombos) : [];
     const canGlobalise = globalEligible && comboCanBeGlobal(combo);
 
     return (
@@ -124,7 +133,7 @@ export const KeyboardShortcutEditor: React.FC<IProps> = ({
                         <KeyboardShortcut value={combo} />
                     </AccessibleButton>
                 )}
-                {globalEligible && !recording && (
+                {globalEligible && !recording && !cleared && (
                     <AccessibleButton
                         kind="link_inline"
                         className="mx_KeyboardShortcut_globalToggle"
@@ -139,6 +148,17 @@ export const KeyboardShortcutEditor: React.FC<IProps> = ({
                         aria-pressed={isGlobal}
                     >
                         {isGlobal ? _t("settings|keyboard|global_on") : _t("settings|keyboard|global_off")}
+                    </AccessibleButton>
+                )}
+                {!cleared && !recording && (
+                    <AccessibleButton
+                        kind="icon"
+                        className="mx_KeyboardShortcut_clearButton"
+                        onClick={handleClear}
+                        title={_t("settings|keyboard|clear_shortcut")}
+                        aria-label={_t("settings|keyboard|clear_shortcut")}
+                    >
+                        ✕
                     </AccessibleButton>
                 )}
                 {isOverridden && !recording && (

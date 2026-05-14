@@ -38,6 +38,11 @@ interface IKeyboardShortcutProps {
 export const KeyboardShortcut: React.FC<IKeyboardShortcutProps> = ({ value, className = "mx_KeyboardShortcut" }) => {
     if (!value) return null;
 
+    // Cleared / explicitly unbound combo: render an italic placeholder rather than an empty <kbd>.
+    if (!value.key) {
+        return <span className={`${className} mx_KeyboardShortcut_unbound`}>{_t("settings|keyboard|unbound")}</span>;
+    }
+
     const modifiersElement: JSX.Element[] = [];
     if (value.ctrlOrCmdKey) {
         modifiersElement.push(<KeyboardKey key="ctrlOrCmdKey" name={IS_MAC ? Key.META : Key.CONTROL} />);
