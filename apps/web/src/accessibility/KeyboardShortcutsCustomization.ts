@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR GPL-3.0-only OR LicenseRef-Element-Com
 Please see LICENSE files in the repository root for full details.
 */
 
-import { type KeyCombo } from "../KeyBindingsManager";
+import { type KeyCombo, unshiftedFromCode } from "../KeyBindingsManager";
 import { IS_MAC } from "../Keyboard";
 import SettingsStore from "../settings/SettingsStore";
 import { SettingLevel } from "../settings/SettingLevel";
@@ -100,22 +100,49 @@ export const toElectronAccelerator = (combo: KeyCombo): string | null => {
     if (combo.altKey) parts.push("Alt");
     if (combo.shiftKey) parts.push("Shift");
 
-    // Electron's accelerator expects letters as uppercase, single chars otherwise as-is.
-    let key = combo.key;
-    if (/^[a-z]$/i.test(key)) key = key.toUpperCase();
-    parts.push(key);
+    parts.push(toAcceleratorKey(combo));
 
     return parts.join("+");
 };
 
 /**
+ * Map a combo's key to Electron's accelerator key name. Letters get uppercased; numpad
+ * digits and operators use Electron's `num*` aliases so they bind to the keypad
+ * specifically rather than the digit row.
+ */
+const NUMPAD_ACCELERATOR: Record<string, string> = {
+    "+": "numadd",
+    "-": "numsub",
+    "*": "nummult",
+    "/": "numdiv",
+    ".": "numdec",
+};
+
+const toAcceleratorKey = (combo: KeyCombo): string => {
+    if (combo.numpad) {
+        if (/^[0-9]$/.test(combo.key)) return "num" + combo.key;
+        if (NUMPAD_ACCELERATOR[combo.key]) return NUMPAD_ACCELERATOR[combo.key];
+    }
+    if (/^[a-z]$/i.test(combo.key)) return combo.key.toUpperCase();
+    return combo.key;
+};
+
+/**
  * Capture a KeyCombo from a keydown event. Returns null when only modifier
  * keys are pressed, so callers can keep listening until a "real" key arrives.
+ *
+ * The captured `key` is the un-shifted character of the physical key (so Shift+1
+ * records as "1", not "!", and so Numpad 7 records as "7" with `numpad: true`
+ * instead of "Home" when NumLock is off). This keeps recorded combos stable across
+ * Shift state and lets the global hotkey registrar tell the numpad apart from the
+ * digit row.
  */
 export const captureCombo = (ev: KeyboardEvent | React.KeyboardEvent): KeyCombo | null => {
     if (MODIFIER_KEYS.has(ev.key)) return null;
 
-    const combo: KeyCombo = { key: ev.key };
+    const code = typeof ev.code === "string" ? ev.code : "";
+    const combo: KeyCombo = { key: unshiftedFromCode(code, ev.key) };
+    if (code.startsWith("Numpad")) combo.numpad = true;
     if (ev.ctrlKey) combo.ctrlKey = true;
     if (ev.altKey) combo.altKey = true;
     if (ev.shiftKey) combo.shiftKey = true;
@@ -131,7 +158,8 @@ export const combosEqual = (a: KeyCombo, b: KeyCombo): boolean => {
         !!a.altKey === !!b.altKey &&
         !!a.shiftKey === !!b.shiftKey &&
         !!a.metaKey === !!b.metaKey &&
-        !!a.ctrlOrCmdKey === !!b.ctrlOrCmdKey
+        !!a.ctrlOrCmdKey === !!b.ctrlOrCmdKey &&
+        !!a.numpad === !!b.numpad
     );
 };
 

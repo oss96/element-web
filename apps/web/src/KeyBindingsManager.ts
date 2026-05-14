@@ -12,12 +12,57 @@ import { defaultBindingsProvider } from "./KeyBindingsDefaults";
 import { IS_MAC } from "./Keyboard";
 
 /**
+ * Map a `KeyboardEvent.code` value to the un-shifted character of that physical key, so
+ * captures and matches stay stable across Shift modifications (Shift+1 → "1", not "!").
+ * For codes outside the standard digit / letter / punctuation set, the caller's `ev.key` fallback is used.
+ */
+const CODE_TO_UNSHIFTED: Record<string, string> = {
+    Minus: "-",
+    Equal: "=",
+    BracketLeft: "[",
+    BracketRight: "]",
+    Semicolon: ";",
+    Quote: "'",
+    Backquote: "`",
+    Backslash: "\\",
+    IntlBackslash: "\\",
+    Comma: ",",
+    Period: ".",
+    Slash: "/",
+    NumpadAdd: "+",
+    NumpadSubtract: "-",
+    NumpadMultiply: "*",
+    NumpadDivide: "/",
+    NumpadDecimal: ".",
+    NumpadEqual: "=",
+    NumpadEnter: "Enter",
+};
+
+export const unshiftedFromCode = (code: string | undefined, fallback: string): string => {
+    if (!code) return fallback;
+    if (code in CODE_TO_UNSHIFTED) return CODE_TO_UNSHIFTED[code];
+    if (code.startsWith("Digit")) return code.slice(5);
+    if (code.startsWith("Numpad") && /^[0-9]$/.test(code.slice(6))) return code.slice(6);
+    // Letters are stored lower-case so they line up with the existing KEYBOARD_SHORTCUTS defaults
+    // (e.g. Key.B === "b"); the display layer uppercases for the kbd glyph.
+    if (code.startsWith("Key")) return code.slice(3).toLowerCase();
+    return fallback;
+};
+
+/**
  * Represent a key combination.
  *
  * The combo is evaluated strictly, i.e. the KeyboardEvent must match exactly what is specified in the KeyCombo.
  */
 export type KeyCombo = {
     key: string;
+
+    /**
+     * True when the binding was recorded on the numeric keypad. The match against an incoming
+     * KeyboardEvent only considers this flag when it's `true` — combos without it stay
+     * backwards-compatible with the existing defaults that fire on either physical row.
+     */
+    numpad?: boolean;
 
     /** On PC: ctrl is pressed; on Mac: meta is pressed */
     ctrlOrCmdKey?: boolean;
@@ -40,14 +85,29 @@ export type KeyBinding = {
  */
 export function isKeyComboMatch(ev: KeyboardEvent | React.KeyboardEvent, combo: KeyCombo, onMac: boolean): boolean {
     if (combo.key !== undefined) {
+        // A numpad-flagged binding only fires when the physical numpad press it was recorded
+        // from is what came in. Conversely, an unflagged combo still matches both numpad and
+        // main-row presses, so defaults like ScrollUp on PageUp keep working from either key.
+        if (combo.numpad && !(typeof ev.code === "string" && ev.code.startsWith("Numpad"))) {
+            return false;
+        }
+
         // When shift is pressed, letters are returned as upper case chars. In this case do a lower case comparison.
         // This works for letter combos such as shift + U as well for none letter combos such as shift + Escape.
         // If shift is not pressed, the toLowerCase conversion can be avoided.
+        //
+        // We also accept a match against the un-shifted physical key (derived from ev.code below),
+        // so Ctrl+Shift+1 recorded as `{key: "1", shiftKey: true}` still fires when the user
+        // produces "!" by holding shift over the digit row.
+        const physical = unshiftedFromCode(ev.code, ev.key);
         if (ev.shiftKey) {
-            if (ev.key.toLowerCase() !== combo.key.toLowerCase()) {
+            const evLower = ev.key.toLowerCase();
+            const physLower = physical.toLowerCase();
+            const comboLower = combo.key.toLowerCase();
+            if (evLower !== comboLower && physLower !== comboLower) {
                 return false;
             }
-        } else if (ev.key !== combo.key) {
+        } else if (ev.key !== combo.key && physical !== combo.key) {
             return false;
         }
     }

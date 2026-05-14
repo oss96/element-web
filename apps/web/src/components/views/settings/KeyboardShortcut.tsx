@@ -53,10 +53,12 @@ export const KeyboardShortcut: React.FC<IKeyboardShortcutProps> = ({ value, clas
         modifiersElement.push(<KeyboardKey key="shiftKey" name={Key.SHIFT} />);
     }
 
+    const displayKey = value.numpad ? `${_t("keyboard|numpad_prefix")} ${value.key}` : value.key;
+
     return (
         <div className={className}>
             {modifiersElement}
-            <KeyboardKey name={value.key} last />
+            <KeyboardKey name={displayKey} last />
         </div>
     );
 };

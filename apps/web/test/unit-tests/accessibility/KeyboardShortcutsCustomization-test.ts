@@ -17,10 +17,11 @@ import { type KeyCombo } from "../../../src/KeyBindingsManager";
 
 const makeEvent = (
     key: string,
-    mods: Partial<Pick<KeyboardEvent, "ctrlKey" | "altKey" | "shiftKey" | "metaKey">> = {},
+    mods: Partial<Pick<KeyboardEvent, "ctrlKey" | "altKey" | "shiftKey" | "metaKey" | "code">> = {},
 ): KeyboardEvent =>
     ({
         key,
+        code: "",
         ctrlKey: false,
         altKey: false,
         shiftKey: false,
@@ -56,6 +57,28 @@ describe("KeyboardShortcutsCustomization", () => {
             expect("altKey" in combo).toBe(false);
             expect("shiftKey" in combo).toBe(false);
             expect("metaKey" in combo).toBe(false);
+        });
+
+        it("derives the un-shifted character from event.code for shifted digits", () => {
+            // Browser delivers "!" when Shift+1 is pressed on a US layout. The recorded
+            // combo should still read "1" so the row and the global accelerator both make sense.
+            const combo = captureCombo(makeEvent("!", { code: "Digit1", ctrlKey: true, shiftKey: true }));
+            expect(combo).toEqual({ key: "1", ctrlKey: true, shiftKey: true });
+        });
+
+        it("flags numpad presses and records the digit even when NumLock is off", () => {
+            // Numpad 7 with NumLock off arrives as ev.key="Home". We still record "7" + numpad.
+            const numLockOff = captureCombo(makeEvent("Home", { code: "Numpad7", ctrlKey: true }));
+            expect(numLockOff).toEqual({ key: "7", numpad: true, ctrlKey: true });
+
+            const numLockOn = captureCombo(makeEvent("7", { code: "Numpad7", ctrlKey: true }));
+            expect(numLockOn).toEqual({ key: "7", numpad: true, ctrlKey: true });
+        });
+
+        it("derives KeyA-style codes back to their letter", () => {
+            // Caps Lock would change ev.key to "A"; the binding still wants "a".
+            const combo = captureCombo(makeEvent("A", { code: "KeyA", ctrlKey: true }));
+            expect(combo!.key).toBe("a");
         });
     });
 
@@ -156,6 +179,18 @@ describe("KeyboardShortcutsCustomization", () => {
 
         it("passes function keys through unchanged", () => {
             expect(toElectronAccelerator({ key: "F13" })).toBe("F13");
+        });
+
+        it("emits Electron's numX alias for numpad digit combos", () => {
+            expect(toElectronAccelerator({ key: "0", numpad: true, ctrlKey: true })).toBe("Control+num0");
+            expect(toElectronAccelerator({ key: "7", numpad: true, ctrlOrCmdKey: true })).toBe(
+                "CommandOrControl+num7",
+            );
+        });
+
+        it("emits the matching alias for numpad operators (numadd/numsub/etc.)", () => {
+            expect(toElectronAccelerator({ key: "+", numpad: true, ctrlKey: true })).toBe("Control+numadd");
+            expect(toElectronAccelerator({ key: "*", numpad: true, ctrlKey: true })).toBe("Control+nummult");
         });
     });
 });

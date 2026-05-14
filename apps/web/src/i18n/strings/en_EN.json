@@ -1477,6 +1477,7 @@
         "jump_room_search": "Jump to room search",
         "jump_to_read_marker": "Jump to oldest unread message",
         "keyboard_shortcuts_tab": "Open this settings tab",
+        "numpad_prefix": "Num",
         "navigate_next_history": "Next recently visited room or space",
         "navigate_next_message_edit": "Navigate to next message to edit",
         "navigate_prev_history": "Previous recently visited room or space",
