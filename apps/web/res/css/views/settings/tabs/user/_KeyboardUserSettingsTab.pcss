@@ -23,10 +23,65 @@ Please see LICENSE files in the repository root for full details.
 }
 
 .mx_KeyboardShortcut_shortcutRow {
+    flex-wrap: wrap;
     column-gap: $spacing-8;
+    row-gap: $spacing-4;
 }
 
 .mx_KeyboardShortcut {
     flex-wrap: nowrap;
     column-gap: $spacing-4;
+}
+
+.mx_KeyboardShortcut_shortcutLabel {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.mx_KeyboardShortcut_shortcutControls {
+    display: flex;
+    align-items: center;
+    column-gap: $spacing-8;
+}
+
+.mx_KeyboardShortcut_editTrigger {
+    padding: 2px 4px;
+    border-radius: 4px;
+
+    &:hover,
+    &:focus-visible {
+        background-color: $quinary-content;
+    }
+}
+
+.mx_KeyboardShortcut_recording {
+    padding: 4px 12px;
+    border: 1px dashed $accent;
+    border-radius: 6px;
+    color: $secondary-content;
+    font-style: italic;
+    cursor: text;
+    outline: none;
+
+    &:focus-visible {
+        border-style: solid;
+    }
+}
+
+.mx_KeyboardShortcut_resetButton {
+    font-size: 14px;
+    line-height: 1;
+    color: $secondary-content;
+}
+
+.mx_KeyboardShortcut_conflict {
+    flex: 1 1 100%;
+    font-size: 12px;
+    color: $alert;
+}
+
+.mx_KeyboardShortcut_resetAllRow {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: $spacing-8;
 }

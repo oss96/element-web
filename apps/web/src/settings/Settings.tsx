@@ -55,6 +55,7 @@ import BlockInvitesConfigController from "./controllers/BlockInvitesConfigContro
 import RequiresSettingsController from "./controllers/RequiresSettingsController.ts";
 import { type OrderedCustomSections, type CustomSectionsData } from "../stores/room-list-v3/section.ts";
 import { type NotificationSound } from "../Notifier.ts";
+import { type KeyCombo } from "../KeyBindingsManager.ts";
 
 export const defaultWatchManager = new WatchManager();
 
@@ -273,6 +274,7 @@ export interface Settings {
     "sendTypingNotifications": IBaseSetting<boolean>;
     "showTypingNotifications": IBaseSetting<boolean>;
     "ctrlFForSearch": IBaseSetting<boolean>;
+    "Keyboard.userShortcuts": IBaseSetting<Record<string, KeyCombo>>;
     "MessageComposerInput.ctrlEnterToSend": IBaseSetting<boolean>;
     "MessageComposerInput.surroundWith": IBaseSetting<boolean>;
     "MessageComposerInput.autoReplaceEmoji": IBaseSetting<boolean>;
@@ -946,6 +948,10 @@ export const SETTINGS: Settings = {
             ? _td("settings|use_command_enter_send_message")
             : _td("settings|use_control_enter_send_message"),
         default: false,
+    },
+    "Keyboard.userShortcuts": {
+        supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS,
+        default: {},
     },
     "MessageComposerInput.surroundWith": {
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,

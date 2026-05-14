@@ -20,6 +20,7 @@ import {
     type KeyboardShortcutSetting,
     MAC_ONLY_SHORTCUTS,
 } from "./KeyboardShortcuts";
+import { getUserShortcutOverrides } from "./KeyboardShortcutsCustomization";
 
 /**
  * This function gets the keyboard shortcuts that should be presented in the UI
@@ -83,9 +84,14 @@ const getUIOnlyShortcuts = (): IKeyboardShortcuts => {
 
 /**
  * This function gets keyboard shortcuts that can be consumed by the KeyBindingDefaults.
+ *
+ * User overrides stored at the DEVICE level (via the Keyboard settings tab) replace
+ * each shortcut's `default` KeyCombo. Shortcuts the user hasn't customised retain the
+ * factory default.
  */
 export const getKeyboardShortcuts = (): IKeyboardShortcuts => {
     const overrideBrowserShortcuts = PlatformPeg.get()?.overrideBrowserShortcuts();
+    const userOverrides = getUserShortcutOverrides();
 
     return (Object.keys(KEYBOARD_SHORTCUTS) as KeyBindingAction[])
         .filter((k) => {
@@ -96,7 +102,9 @@ export const getKeyboardShortcuts = (): IKeyboardShortcuts => {
             return true;
         })
         .reduce((o, key) => {
-            o[key as KeyBindingAction] = KEYBOARD_SHORTCUTS[key as KeyBindingAction];
+            const base = KEYBOARD_SHORTCUTS[key as KeyBindingAction]!;
+            const override = userOverrides[key as KeyBindingAction];
+            o[key as KeyBindingAction] = override ? { ...base, default: override } : base;
             return o;
         }, {} as IKeyboardShortcuts);
 };

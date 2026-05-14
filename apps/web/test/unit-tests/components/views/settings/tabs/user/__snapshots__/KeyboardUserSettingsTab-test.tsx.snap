@@ -69,307 +69,532 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Toggle Bold
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      b
-                       
-                    </kbd>
+                    Toggle Bold
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          b
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Toggle Italics
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      i
-                       
-                    </kbd>
+                    Toggle Italics
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          i
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Toggle Quote
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      Shift
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      &gt;
-                       
-                    </kbd>
+                    Toggle Quote
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          Shift
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          &gt;
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Toggle Link
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      Shift
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      l
-                       
-                    </kbd>
+                    Toggle Link
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          Shift
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          l
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Toggle Code Block
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      e
-                       
-                    </kbd>
+                    Toggle Code Block
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          e
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Undo edit
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      z
-                       
-                    </kbd>
+                    Undo edit
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          z
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Redo edit
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      y
-                       
-                    </kbd>
+                    Redo edit
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          y
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Jump to start of the composer
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      Home
-                       
-                    </kbd>
+                    Jump to start of the composer
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          Home
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Jump to end of the composer
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      End
-                       
-                    </kbd>
+                    Jump to end of the composer
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          End
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Cancel replying to a message
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Esc
-                       
-                    </kbd>
+                    Cancel replying to a message
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Esc
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Navigate to next message to edit
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      ↓
-                       
-                    </kbd>
+                    Navigate to next message to edit
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          ↓
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Navigate to previous message to edit
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      ↑
-                       
-                    </kbd>
+                    Navigate to previous message to edit
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          ↑
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Navigate to next message in composer history
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      Alt
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      ↓
-                       
-                    </kbd>
+                    Navigate to next message in composer history
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          Alt
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          ↓
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Navigate to previous message in composer history
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      Alt
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      ↑
-                       
-                    </kbd>
+                    Navigate to previous message in composer history
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          Alt
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          ↑
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Send a sticker
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      ;
-                       
-                    </kbd>
+                    Send a sticker
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          ;
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
               </ul>
@@ -396,41 +621,71 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Toggle microphone mute
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      d
-                       
-                    </kbd>
+                    Toggle microphone mute
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          d
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Toggle webcam on/off
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      e
-                       
-                    </kbd>
+                    Toggle webcam on/off
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          e
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
               </ul>
@@ -477,129 +732,234 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Upload a file
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      Shift
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      u
-                       
-                    </kbd>
+                    Upload a file
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          Shift
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          u
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Dismiss read marker and jump to bottom
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Esc
-                       
-                    </kbd>
+                    Dismiss read marker and jump to bottom
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Esc
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Jump to oldest unread message
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Shift
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      Page Up
-                       
-                    </kbd>
+                    Jump to oldest unread message
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Shift
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          Page Up
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Scroll up in the timeline
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Page Up
-                       
-                    </kbd>
+                    Scroll up in the timeline
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Page Up
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Scroll down in the timeline
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Page Down
-                       
-                    </kbd>
+                    Scroll down in the timeline
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Page Down
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Jump to first message
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      Home
-                       
-                    </kbd>
+                    Jump to first message
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          Home
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Jump to last message
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      End
-                       
-                    </kbd>
+                    Jump to last message
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          End
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
               </ul>
@@ -626,71 +986,146 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Select room from the room list
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Enter
-                       
-                    </kbd>
+                    Select room from the room list
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Enter
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Collapse room list section
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      ←
-                       
-                    </kbd>
+                    Collapse room list section
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          ←
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Expand room list section
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      →
-                       
-                    </kbd>
+                    Expand room list section
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          →
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Navigate down in the room list
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      ↓
-                       
-                    </kbd>
+                    Navigate down in the room list
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          ↓
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Navigate up in the room list
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      ↑
-                       
-                    </kbd>
+                    Navigate up in the room list
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          ↑
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
               </ul>
@@ -717,49 +1152,94 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Close dialog or context menu
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Esc
-                       
-                    </kbd>
+                    Close dialog or context menu
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Esc
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Activate selected button
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Enter
-                       
-                    </kbd>
+                    Activate selected button
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Enter
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Save
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      s
-                       
-                    </kbd>
+                    Save
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          s
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
               </ul>
@@ -786,271 +1266,451 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Toggle the top left menu
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      \`
-                       
-                    </kbd>
+                    Toggle the top left menu
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          \`
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Toggle right panel
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      .
-                       
-                    </kbd>
+                    Toggle right panel
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          .
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Toggle space panel
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      Shift
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      d
-                       
-                    </kbd>
+                    Toggle space panel
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          Shift
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          d
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Open this settings tab
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      /
-                       
-                    </kbd>
+                    Open this settings tab
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          /
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Go to Home View
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      Alt
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      h
-                       
-                    </kbd>
+                    Go to Home View
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          Alt
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          h
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Jump to room search
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      k
-                       
-                    </kbd>
+                    Jump to room search
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          k
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Next unread room or DM
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Alt
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      Shift
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      ↓
-                       
-                    </kbd>
+                    Next unread room or DM
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Alt
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          Shift
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          ↓
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Previous unread room or DM
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Alt
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      Shift
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      ↑
-                       
-                    </kbd>
+                    Previous unread room or DM
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Alt
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          Shift
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          ↑
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Next room or DM
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Alt
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      ↓
-                       
-                    </kbd>
+                    Next room or DM
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Alt
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          ↓
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Previous room or DM
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Alt
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      ↑
-                       
-                    </kbd>
+                    Previous room or DM
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Alt
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          ↑
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Go to next landmark
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      F6
-                       
-                    </kbd>
+                    Go to next landmark
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          F6
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Go to previous landmark
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Ctrl
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      Shift
-                       
-                    </kbd>
-                    +
-                    <kbd>
-                       
-                      F6
-                       
-                    </kbd>
+                    Go to previous landmark
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          Shift
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          F6
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
               </ul>
@@ -1077,43 +1737,88 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Cancel autocomplete
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      Esc
-                       
-                    </kbd>
+                    Cancel autocomplete
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Esc
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Next autocomplete suggestion
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      ↓
-                       
-                    </kbd>
+                    Next autocomplete suggestion
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          ↓
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
                   class="mx_KeyboardShortcut_shortcutRow"
                 >
-                  Previous autocomplete suggestion
-                  <div
-                    class="mx_KeyboardShortcut"
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
                   >
-                    <kbd>
-                       
-                      ↑
-                       
-                    </kbd>
+                    Previous autocomplete suggestion
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          ↑
+                           
+                        </kbd>
+                      </div>
+                    </div>
                   </div>
                 </li>
                 <li
