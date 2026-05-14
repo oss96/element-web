@@ -526,14 +526,17 @@ app.on("ready", async () => {
     webContentsHandler(global.mainWindow.webContents);
 
     session.defaultSession.setDisplayMediaRequestHandler(
-        (_, callback) => {
+        (request, callback) => {
+            // System-audio loopback is only meaningful on Windows/macOS — Electron's behaviour
+            // is undefined on Linux. Skip the audio passthrough there to avoid surprises.
+            const audio = request.audioRequested && process.platform !== "linux" ? "loopback" : undefined;
             if (process.env.XDG_SESSION_TYPE === "wayland") {
                 // On Wayland, calling getSources() opens the xdg-desktop-portal picker.
                 // The user can only select a single source there, so Electron will return an array with exactly one entry.
                 desktopCapturer
                     .getSources({ types: ["screen", "window"] })
                     .then((sources) => {
-                        callback({ video: sources[0] });
+                        callback({ video: sources[0], audio });
                     })
                     .catch((err) => {
                         // If the user cancels the dialog an error occurs "Failed to get sources"
@@ -541,7 +544,9 @@ app.on("ready", async () => {
                         callback({ video: { id: "", name: "" } }); // The promise does not return if no dummy is passed here as source
                     });
             } else {
-                global.mainWindow?.webContents.send("openDesktopCapturerSourcePicker");
+                global.mainWindow?.webContents.send("openDesktopCapturerSourcePicker", {
+                    audioRequested: request.audioRequested,
+                });
             }
             setDisplayMediaCallback(callback);
         },
