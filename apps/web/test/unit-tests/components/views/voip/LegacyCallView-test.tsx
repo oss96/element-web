@@ -58,6 +58,7 @@ describe("LegacyCallView", () => {
                             getMember: jest.fn(),
                             isAudioMuted: jest.fn().mockReturnValue(true),
                             isVideoMuted: jest.fn().mockReturnValue(true),
+                            isSpeaking: jest.fn().mockReturnValue(false),
                             isLocal: jest.fn().mockReturnValue(x.local),
                             purpose: x.screenshare && SDPStreamMetadataPurpose.Screenshare,
                         }) as unknown as CallFeed,

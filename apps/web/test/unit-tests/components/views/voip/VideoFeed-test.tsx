@@ -50,6 +50,7 @@ describe("VideoFeed", () => {
         const feed = {
             isAudioMuted: jest.fn().mockReturnValue(false),
             isVideoMuted: jest.fn().mockReturnValue(true),
+            isSpeaking: jest.fn().mockReturnValue(false),
             addListener: jest.fn(),
             removeListener: jest.fn(),
         };
