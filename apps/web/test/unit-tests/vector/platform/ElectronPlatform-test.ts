@@ -103,7 +103,7 @@ describe("ElectronPlatform", () => {
 
         // @ts-ignore mock
         mocked(Modal.createDialog).mockReturnValue({
-            finished: new Promise((r) => r(["source"])),
+            finished: new Promise((r) => r([{ source: "source", shareAudio: true }])),
         });
 
         let res: () => void;
@@ -116,14 +116,14 @@ describe("ElectronPlatform", () => {
         });
 
         const [event, handler] = getElectronEventHandlerCall("openDesktopCapturerSourcePicker")!;
-        handler();
+        handler({}, { audioRequested: true });
 
         await waitForIPCSend;
 
         expect(event).toBeTruthy();
-        expect(Modal.createDialog).toHaveBeenCalledWith(DesktopCapturerSourcePicker);
+        expect(Modal.createDialog).toHaveBeenCalledWith(DesktopCapturerSourcePicker, { offerAudio: true });
         // @ts-ignore mock
-        expect(plat.ipc.call).toHaveBeenCalledWith("callDisplayMediaCallback", "source", false);
+        expect(plat.ipc.call).toHaveBeenCalledWith("callDisplayMediaCallback", "source", true);
     });
 
     it("should show a toast when showToast is fired", async () => {

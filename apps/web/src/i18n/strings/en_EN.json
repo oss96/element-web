@@ -3979,6 +3979,8 @@
         "no_permission_conference_description": "You do not have permission to start a conference call in this room",
         "on_hold": "%(name)s on hold",
         "output_devices": "Output devices",
+        "screenshare_audio_byline_window": "System audio sharing only works for entire screens.",
+        "screenshare_audio_label": "Also share audio",
         "screenshare_monitor": "Share entire screen",
         "screenshare_title": "Share content",
         "screenshare_window": "Application window",

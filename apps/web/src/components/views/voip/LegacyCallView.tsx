@@ -268,7 +268,10 @@ export default class LegacyCallView extends React.Component<IProps, IState> {
         if (this.state.screensharing) {
             isScreensharing = await this.props.call.setScreensharingEnabled(false);
         } else {
-            isScreensharing = await this.props.call.setScreensharingEnabled(true);
+            // Pass audio: true so the SDK requests an audio track from getDisplayMedia.
+            // On Electron the desktop picker surfaces an opt-in checkbox; in the browser
+            // the native picker shows the platform's own "Share tab audio" option.
+            isScreensharing = await this.props.call.setScreensharingEnabled(true, { audio: true });
         }
 
         this.props.setSidebarShown?.(true);

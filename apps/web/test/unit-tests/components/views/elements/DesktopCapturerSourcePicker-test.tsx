@@ -87,6 +87,47 @@ describe("DesktopCapturerSourcePicker", () => {
 
         await userEvent.click(screen1Button);
         await userEvent.click(screen.getByRole("button", { name: "Share" }));
-        expect(onFinished).toHaveBeenCalledWith(SOURCES[0]);
+        expect(onFinished).toHaveBeenCalledWith({ source: SOURCES[0], shareAudio: false });
+    });
+
+    it("should not render the audio checkbox when offerAudio is unset", () => {
+        render(<DesktopCapturerSourcePicker onFinished={() => {}} />);
+        expect(screen.queryByRole("checkbox", { name: "Also share audio" })).not.toBeInTheDocument();
+    });
+
+    it("should render the audio checkbox when offerAudio is true", () => {
+        render(<DesktopCapturerSourcePicker onFinished={() => {}} offerAudio={true} />);
+        expect(screen.getByRole("checkbox", { name: "Also share audio" })).toBeInTheDocument();
+    });
+
+    it("should return shareAudio: true when the user opts in and picks a screen", async () => {
+        const onFinished = jest.fn();
+        render(<DesktopCapturerSourcePicker onFinished={onFinished} offerAudio={true} />);
+
+        const screen1Button = await screen.findByRole("button", { name: "Screen 1" });
+        await userEvent.click(screen1Button);
+        await userEvent.click(screen.getByRole("checkbox", { name: "Also share audio" }));
+        await userEvent.click(screen.getByRole("button", { name: "Share" }));
+
+        expect(onFinished).toHaveBeenCalledWith({ source: SOURCES[0], shareAudio: true });
+    });
+
+    it("should disable the audio checkbox and force shareAudio off on the window tab", async () => {
+        const onFinished = jest.fn();
+        render(<DesktopCapturerSourcePicker onFinished={onFinished} offerAudio={true} />);
+
+        // Tick the audio checkbox while still on the Screens tab.
+        await userEvent.click(screen.getByRole("checkbox", { name: "Also share audio" }));
+
+        // Switch to Windows tab — checkbox should disable and forcing shareAudio off.
+        await userEvent.click(screen.getByRole("tab", { name: "Application window" }));
+        const checkbox = screen.getByRole("checkbox", { name: "Also share audio" });
+        expect(checkbox).toBeDisabled();
+
+        const window1Button = await screen.findByRole("button", { name: "Window 1" });
+        await userEvent.click(window1Button);
+        await userEvent.click(screen.getByRole("button", { name: "Share" }));
+
+        expect(onFinished).toHaveBeenCalledWith({ source: SOURCES[1], shareAudio: false });
     });
 });

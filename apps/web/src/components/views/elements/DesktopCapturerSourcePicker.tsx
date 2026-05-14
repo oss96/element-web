@@ -13,9 +13,15 @@ import { _t, _td } from "../../../languageHandler";
 import BaseDialog from "..//dialogs/BaseDialog";
 import DialogButtons from "./DialogButtons";
 import AccessibleButton from "./AccessibleButton";
+import LabelledCheckbox from "./LabelledCheckbox";
 import TabbedView, { Tab, TabLocation } from "../../structures/TabbedView";
 import PlatformPeg from "../../../PlatformPeg";
 import { type NonEmptyArray } from "../../../@types/common";
+
+export interface DesktopCapturerSourcePickerResult {
+    source: DesktopCapturerSource;
+    shareAudio: boolean;
+}
 
 export function getDesktopCapturerSources(): Promise<Array<DesktopCapturerSource>> {
     const options: GetSourcesOptions = {
@@ -68,9 +74,16 @@ export interface PickerIState {
     selectedTab: Tabs;
     sources: Array<DesktopCapturerSource>;
     selectedSource?: DesktopCapturerSource;
+    shareAudio: boolean;
 }
 export interface PickerIProps {
-    onFinished(source?: DesktopCapturerSource): void;
+    /**
+     * Whether the underlying getDisplayMedia() call requested audio. When true,
+     * the picker exposes an "Also share audio" checkbox; the user's choice is
+     * returned via {@link DesktopCapturerSourcePickerResult.shareAudio}.
+     */
+    offerAudio?: boolean;
+    onFinished(result?: DesktopCapturerSourcePickerResult): void;
 }
 
 export default class DesktopCapturerSourcePicker extends React.Component<PickerIProps, PickerIState> {
@@ -82,6 +95,7 @@ export default class DesktopCapturerSourcePicker extends React.Component<PickerI
         this.state = {
             selectedTab: Tabs.Screens,
             sources: [],
+            shareAudio: false,
         };
     }
 
@@ -110,11 +124,20 @@ export default class DesktopCapturerSourcePicker extends React.Component<PickerI
     };
 
     private onShare = (): void => {
-        this.props.onFinished(this.state.selectedSource);
+        if (!this.state.selectedSource) return;
+        // Audio loopback only works for entire screens on Windows/Chromium; an
+        // audio track for a window source would just be silent. Force it off
+        // for window sources so we don't return a misleading "shareAudio: true".
+        const shareAudio = this.state.selectedTab === Tabs.Screens && this.state.shareAudio;
+        this.props.onFinished({ source: this.state.selectedSource, shareAudio });
     };
 
     private onTabChange = (tab: Tabs): void => {
         this.setState({ selectedSource: undefined, selectedTab: tab });
+    };
+
+    private onAudioChange = (checked: boolean): void => {
+        this.setState({ shareAudio: checked });
     };
 
     private onCloseClick = (): void => {
@@ -144,6 +167,8 @@ export default class DesktopCapturerSourcePicker extends React.Component<PickerI
             this.getTab(Tabs.Windows, _td("voip|screenshare_window")),
         ];
 
+        const audioOnlyOnScreenTab = this.state.selectedTab !== Tabs.Screens;
+
         return (
             <BaseDialog
                 className="mx_desktopCapturerSourcePicker"
@@ -156,6 +181,18 @@ export default class DesktopCapturerSourcePicker extends React.Component<PickerI
                     activeTabId={this.state.selectedTab}
                     onChange={this.onTabChange}
                 />
+                {this.props.offerAudio && (
+                    <LabelledCheckbox
+                        className="mx_desktopCapturerSourcePicker_audio"
+                        label={_t("voip|screenshare_audio_label")}
+                        byline={
+                            audioOnlyOnScreenTab ? _t("voip|screenshare_audio_byline_window") : undefined
+                        }
+                        value={this.state.shareAudio && !audioOnlyOnScreenTab}
+                        disabled={audioOnlyOnScreenTab}
+                        onChange={this.onAudioChange}
+                    />
+                )}
                 <DialogButtons
                     primaryButton={_t("action|share")}
                     hasCancel={true}

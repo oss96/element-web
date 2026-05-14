@@ -179,14 +179,14 @@ export default class ElectronPlatform extends BasePlatform {
         });
 
         this.electron.on("openDesktopCapturerSourcePicker", async (_ev, payload?: { audioRequested?: boolean }) => {
-            const audioRequested = !!payload?.audioRequested;
-            const { finished } = Modal.createDialog(DesktopCapturerSourcePicker);
-            const [source] = await finished;
+            const offerAudio = !!payload?.audioRequested;
+            const { finished } = Modal.createDialog(DesktopCapturerSourcePicker, { offerAudio });
+            const [result] = await finished;
             // getDisplayMedia promise does not return if no dummy is passed here as source
             await this.ipc.call(
                 "callDisplayMediaCallback",
-                source ?? { id: "", name: "", thumbnailURL: "" },
-                audioRequested,
+                result?.source ?? { id: "", name: "", thumbnailURL: "" },
+                !!result?.shareAudio,
             );
         });
 
