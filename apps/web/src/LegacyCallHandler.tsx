@@ -112,6 +112,7 @@ export enum LegacyCallHandlerEvent {
     CallsChanged = "calls_changed",
     CallChangeRoom = "call_change_room",
     SilencedCallsChanged = "silenced_calls_changed",
+    IncomingAudioMutedCallsChanged = "incoming_audio_muted_calls_changed",
     ShownSidebarsChanged = "shown_sidebars_changed",
     CallState = "call_state",
     ProtocolSupport = "protocol_support",
@@ -121,6 +122,7 @@ type EventEmitterMap = {
     [LegacyCallHandlerEvent.CallsChanged]: (calls: Map<string, MatrixCall>) => void;
     [LegacyCallHandlerEvent.CallChangeRoom]: (call: MatrixCall) => void;
     [LegacyCallHandlerEvent.SilencedCallsChanged]: (calls: Set<string>) => void;
+    [LegacyCallHandlerEvent.IncomingAudioMutedCallsChanged]: (calls: Set<string>) => void;
     [LegacyCallHandlerEvent.ShownSidebarsChanged]: (sidebarsShown: Map<string, boolean>) => void;
     [LegacyCallHandlerEvent.CallState]: (mappedRoomId: string | null, status: CallState) => void;
     [LegacyCallHandlerEvent.ProtocolSupport]: () => void;
@@ -145,6 +147,8 @@ export default class LegacyCallHandler extends TypedEventEmitter<LegacyCallHandl
     private assertedIdentityNativeUsers = new Map<string, string>();
 
     private silencedCalls = new Set<string>(); // callIds
+
+    private incomingAudioMutedCalls = new Set<string>(); // callIds with remote audio muted by the user
 
     private shownSidebars = new Map<string, boolean>(); // callId (call) -> sidebar show
 
@@ -229,6 +233,30 @@ export default class LegacyCallHandler extends TypedEventEmitter<LegacyCallHandl
 
     public isCallSilenced(callId?: string): boolean {
         return this.isForcedSilent() || (!!callId && this.silencedCalls.has(callId));
+    }
+
+    public setIncomingAudioMuted(callId: string | undefined, muted: boolean): void {
+        if (!callId) return;
+        const had = this.incomingAudioMutedCalls.has(callId);
+        if (muted) {
+            if (had) return;
+            this.incomingAudioMutedCalls.add(callId);
+        } else {
+            if (!had) return;
+            this.incomingAudioMutedCalls.delete(callId);
+        }
+        this.emit(LegacyCallHandlerEvent.IncomingAudioMutedCallsChanged, this.incomingAudioMutedCalls);
+    }
+
+    public toggleIncomingAudioMuted(callId?: string): boolean {
+        if (!callId) return false;
+        const next = !this.incomingAudioMutedCalls.has(callId);
+        this.setIncomingAudioMuted(callId, next);
+        return next;
+    }
+
+    public isIncomingAudioMuted(callId?: string): boolean {
+        return !!callId && this.incomingAudioMutedCalls.has(callId);
     }
 
     /**

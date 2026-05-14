@@ -1506,6 +1506,7 @@
         "space": "Space",
         "switch_to_space": "Switch to space by number",
         "toggle_hidden_events": "Toggle hidden event visibility",
+        "toggle_incoming_audio_mute": "Toggle incoming audio mute",
         "toggle_microphone_mute": "Toggle microphone mute",
         "toggle_right_panel": "Toggle right panel",
         "toggle_space_panel": "Toggle space panel",

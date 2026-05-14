@@ -14,6 +14,7 @@ import MediaDeviceHandler, { MediaDeviceHandlerEvent } from "../../../MediaDevic
 
 interface IProps {
     feed: CallFeed;
+    muted?: boolean;
 }
 
 interface IState {
@@ -46,6 +47,13 @@ export default class AudioFeed extends React.Component<IProps, IState> {
         this.stopMedia();
     }
 
+    public componentDidUpdate(prevProps: IProps): void {
+        if (prevProps.muted !== this.props.muted) {
+            const element = this.element.current;
+            if (element) element.muted = !!this.props.muted;
+        }
+    }
+
     private onAudioOutputChanged = (audioOutput: string): void => {
         const element = this.element.current;
         if (audioOutput) {
@@ -66,7 +74,7 @@ export default class AudioFeed extends React.Component<IProps, IState> {
         const element = this.element.current;
         if (!element) return;
         this.onAudioOutputChanged(MediaDeviceHandler.getAudioOutput());
-        element.muted = false;
+        element.muted = !!this.props.muted;
         element.srcObject = this.props.feed.stream;
         element.autoplay = true;
 

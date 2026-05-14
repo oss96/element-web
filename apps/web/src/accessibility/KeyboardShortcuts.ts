@@ -132,6 +132,8 @@ export enum KeyBindingAction {
     ToggleMicInCall = "KeyBinding.toggleMicInCall",
     /** Toggles webcam while on a call */
     ToggleWebcamInCall = "KeyBinding.toggleWebcamInCall",
+    /** Toggles incoming audio (other participants) while on a call */
+    ToggleIncomingAudioInCall = "KeyBinding.toggleIncomingAudioInCall",
 
     /** Accessibility actions */
     Escape = "KeyBinding.escape",
@@ -230,7 +232,11 @@ export const CATEGORIES: Record<CategoryName, ICategory> = {
     },
     [CategoryName.CALLS]: {
         categoryLabel: _td("keyboard|category_calls"),
-        settingNames: [KeyBindingAction.ToggleMicInCall, KeyBindingAction.ToggleWebcamInCall],
+        settingNames: [
+            KeyBindingAction.ToggleMicInCall,
+            KeyBindingAction.ToggleWebcamInCall,
+            KeyBindingAction.ToggleIncomingAudioInCall,
+        ],
     },
     [CategoryName.ROOM]: {
         categoryLabel: _td("common|room"),
@@ -430,6 +436,14 @@ export const KEYBOARD_SHORTCUTS: IKeyboardShortcuts = {
             key: Key.E,
         },
         displayName: _td("keyboard|toggle_webcam_mute"),
+    },
+    [KeyBindingAction.ToggleIncomingAudioInCall]: {
+        default: {
+            ctrlOrCmdKey: true,
+            shiftKey: true,
+            key: Key.D,
+        },
+        displayName: _td("keyboard|toggle_incoming_audio_mute"),
     },
     [KeyBindingAction.DismissReadMarker]: {
         default: {

@@ -302,6 +302,13 @@ export default class LegacyCallView extends React.Component<IProps, IState> {
                 this.buttonsRef.current?.showControls();
                 handled = true;
                 break;
+
+            case KeyBindingAction.ToggleIncomingAudioInCall:
+                LegacyCallHandler.instance.toggleIncomingAudioMuted(this.props.call.callId);
+                // show the controls to give feedback
+                this.buttonsRef.current?.showControls();
+                handled = true;
+                break;
         }
 
         if (handled) {

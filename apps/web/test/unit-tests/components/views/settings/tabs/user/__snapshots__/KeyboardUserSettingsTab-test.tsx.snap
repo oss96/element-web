@@ -688,6 +688,47 @@ exports[`KeyboardUserSettingsTab renders list of keyboard shortcuts 1`] = `
                     </div>
                   </div>
                 </li>
+                <li
+                  class="mx_KeyboardShortcut_shortcutRow"
+                >
+                  <span
+                    class="mx_KeyboardShortcut_shortcutLabel"
+                  >
+                    Toggle incoming audio mute
+                  </span>
+                  <div
+                    class="mx_KeyboardShortcut_shortcutControls"
+                  >
+                    <div
+                      aria-label="Click to change shortcut"
+                      class="mx_AccessibleButton mx_KeyboardShortcut_editTrigger mx_AccessibleButton_hasKind mx_AccessibleButton_kind_link_inline"
+                      role="button"
+                      tabindex="0"
+                    >
+                      <div
+                        class="mx_KeyboardShortcut"
+                      >
+                        <kbd>
+                           
+                          Ctrl
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          Shift
+                           
+                        </kbd>
+                        +
+                        <kbd>
+                           
+                          d
+                           
+                        </kbd>
+                      </div>
+                    </div>
+                  </div>
+                </li>
               </ul>
             </div>
           </div>

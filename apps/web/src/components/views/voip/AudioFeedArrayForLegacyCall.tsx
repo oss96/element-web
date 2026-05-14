@@ -11,6 +11,7 @@ import { CallEvent, type MatrixCall } from "matrix-js-sdk/src/webrtc/call";
 import { type CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 
 import AudioFeed from "./AudioFeed";
+import LegacyCallHandler, { LegacyCallHandlerEvent } from "../../../LegacyCallHandler";
 
 interface IProps {
     call: MatrixCall;
@@ -18,6 +19,7 @@ interface IProps {
 
 interface IState {
     feeds: Array<CallFeed>;
+    incomingAudioMuted: boolean;
 }
 
 export default class AudioFeedArrayForLegacyCall extends React.Component<IProps, IState> {
@@ -26,15 +28,24 @@ export default class AudioFeedArrayForLegacyCall extends React.Component<IProps,
 
         this.state = {
             feeds: this.props.call.getRemoteFeeds(),
+            incomingAudioMuted: LegacyCallHandler.instance.isIncomingAudioMuted(this.props.call.callId),
         };
     }
 
     public componentDidMount(): void {
         this.props.call.addListener(CallEvent.FeedsChanged, this.onFeedsChanged);
+        LegacyCallHandler.instance.addListener(
+            LegacyCallHandlerEvent.IncomingAudioMutedCallsChanged,
+            this.onIncomingAudioMutedChanged,
+        );
     }
 
     public componentWillUnmount(): void {
         this.props.call.removeListener(CallEvent.FeedsChanged, this.onFeedsChanged);
+        LegacyCallHandler.instance.removeListener(
+            LegacyCallHandlerEvent.IncomingAudioMutedCallsChanged,
+            this.onIncomingAudioMutedChanged,
+        );
     }
 
     public onFeedsChanged = (): void => {
@@ -43,9 +54,15 @@ export default class AudioFeedArrayForLegacyCall extends React.Component<IProps,
         });
     };
 
+    private onIncomingAudioMutedChanged = (): void => {
+        this.setState({
+            incomingAudioMuted: LegacyCallHandler.instance.isIncomingAudioMuted(this.props.call.callId),
+        });
+    };
+
     public render(): JSX.Element[] {
         return this.state.feeds.map((feed, i) => {
-            return <AudioFeed feed={feed} key={i} />;
+            return <AudioFeed feed={feed} muted={this.state.incomingAudioMuted} key={i} />;
         });
     }
 }
