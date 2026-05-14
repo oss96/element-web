@@ -42,6 +42,7 @@ interface IProps {
 interface IState {
     audioMuted: boolean;
     videoMuted: boolean;
+    speaking: boolean;
 }
 
 export default class VideoFeed extends React.PureComponent<IProps, IState> {
@@ -53,6 +54,7 @@ export default class VideoFeed extends React.PureComponent<IProps, IState> {
         this.state = {
             audioMuted: this.props.feed.isAudioMuted(),
             videoMuted: this.props.feed.isVideoMuted(),
+            speaking: this.props.feed.isSpeaking(),
         };
     }
 
@@ -73,10 +75,11 @@ export default class VideoFeed extends React.PureComponent<IProps, IState> {
         }
     }
 
-    public static getDerivedStateFromProps(props: IProps): IState {
+    public static getDerivedStateFromProps(props: IProps, state: IState): IState {
         return {
             audioMuted: props.feed.isAudioMuted(),
             videoMuted: props.feed.isVideoMuted(),
+            speaking: state.speaking,
         };
     }
 
@@ -96,6 +99,7 @@ export default class VideoFeed extends React.PureComponent<IProps, IState> {
         if (oldFeed) {
             this.props.feed.removeListener(CallFeedEvent.NewStream, this.onNewStream);
             this.props.feed.removeListener(CallFeedEvent.MuteStateChanged, this.onMuteStateChanged);
+            this.props.feed.removeListener(CallFeedEvent.Speaking, this.onSpeakingChanged);
             if (this.props.feed.purpose === SDPStreamMetadataPurpose.Usermedia) {
                 this.props.feed.measureVolumeActivity(false);
             }
@@ -104,6 +108,7 @@ export default class VideoFeed extends React.PureComponent<IProps, IState> {
         if (newFeed) {
             this.props.feed.addListener(CallFeedEvent.NewStream, this.onNewStream);
             this.props.feed.addListener(CallFeedEvent.MuteStateChanged, this.onMuteStateChanged);
+            this.props.feed.addListener(CallFeedEvent.Speaking, this.onSpeakingChanged);
             if (this.props.feed.purpose === SDPStreamMetadataPurpose.Usermedia) {
                 this.props.feed.measureVolumeActivity(true);
             }
@@ -166,6 +171,10 @@ export default class VideoFeed extends React.PureComponent<IProps, IState> {
         });
     };
 
+    private onSpeakingChanged = (speaking: boolean): void => {
+        this.setState({ speaking });
+    };
+
     private onResize = (e: Event): void => {
         if (this.props.onResize && !this.props.feed.isLocal()) {
             this.props.onResize(e);
@@ -183,8 +192,9 @@ export default class VideoFeed extends React.PureComponent<IProps, IState> {
 
         let micIcon;
         if (feed.purpose !== SDPStreamMetadataPurpose.Screenshare && !pipMode) {
+            const speakingActive = this.state.speaking && !this.state.audioMuted;
             micIcon = (
-                <div className="mx_VideoFeed_mic">
+                <div className="mx_VideoFeed_mic" data-speaking={speakingActive || undefined}>
                     {this.state.audioMuted ? <MicOffSolidIcon /> : <MicOnSolidIcon />}
                 </div>
             );
