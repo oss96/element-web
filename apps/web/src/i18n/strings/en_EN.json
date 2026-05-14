@@ -2763,6 +2763,8 @@
             "click_to_rebind": "Click to change shortcut",
             "conflict_warning": "Conflicts with: %(actions)s",
             "dialog_title": "<strong>Settings:</strong> Keyboard",
+            "global_off": "Make global",
+            "global_on": "Global",
             "global_requires_modifier": "Add Ctrl, Alt, Cmd, or use F13–F24 to register globally",
             "global_toggle_hint": "Fire this shortcut system-wide, even when Element is in the background",
             "press_key_combination": "Press a key combination…",

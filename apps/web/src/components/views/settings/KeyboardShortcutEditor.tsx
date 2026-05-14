@@ -136,7 +136,7 @@ export const KeyboardShortcutEditor: React.FC<IProps> = ({
                         }
                         aria-pressed={isGlobal}
                     >
-                        {_t(isGlobal ? "settings|keyboard|global_on" : "settings|keyboard|global_off")}
+                        {isGlobal ? _t("settings|keyboard|global_on") : _t("settings|keyboard|global_off")}
                     </AccessibleButton>
                 )}
                 {isOverridden && !recording && (
