@@ -421,10 +421,28 @@ export default class LegacyCallView extends React.Component<IProps, IState> {
         const transfereeCall = LegacyCallHandler.instance.getTransfereeForCallId(call.callId);
         const isOnHold = isLocalOnHold || isRemoteOnHold;
 
+        // In a 1:1 call the primary tile shows the remote person and the secondary
+        // (if rendered) shows the local user. Re-point the primary tile's mic icon
+        // at the local feed so the user sees THEIR own mute / speaking state, and
+        // hide the secondary tile's mic icon to avoid showing the same thing twice.
+        const isOneOnOneLocalSwap =
+            !!secondaryFeed &&
+            secondaryFeed.isLocal() &&
+            secondaryFeed.purpose === SDPStreamMetadataPurpose.Usermedia &&
+            sidebarFeeds.length === 0;
+        const primaryMicFeed = isOneOnOneLocalSwap ? secondaryFeed : undefined;
+
         let secondaryFeedElement: React.ReactNode;
         if (sidebarShown && secondaryFeed && !secondaryFeed.isVideoMuted()) {
             secondaryFeedElement = (
-                <VideoFeed feed={secondaryFeed} call={call} pipMode={pipMode} onResize={onResize} secondary={true} />
+                <VideoFeed
+                    feed={secondaryFeed}
+                    call={call}
+                    pipMode={pipMode}
+                    onResize={onResize}
+                    secondary={true}
+                    hideMicIcon={isOneOnOneLocalSwap}
+                />
             );
         }
 
@@ -521,6 +539,7 @@ export default class LegacyCallView extends React.Component<IProps, IState> {
                         pipMode={pipMode}
                         onResize={onResize}
                         primary={true}
+                        micFeed={primaryMicFeed}
                     />
                 </div>
             );
@@ -533,6 +552,7 @@ export default class LegacyCallView extends React.Component<IProps, IState> {
                         pipMode={pipMode}
                         onResize={onResize}
                         primary={true}
+                        micFeed={primaryMicFeed}
                     />
                     {secondaryFeedElement}
                 </div>
@@ -546,6 +566,7 @@ export default class LegacyCallView extends React.Component<IProps, IState> {
                         pipMode={pipMode}
                         onResize={onResize}
                         primary={true}
+                        micFeed={primaryMicFeed}
                     />
                     {sidebarShown && (
                         <LegacyCallViewSidebar feeds={sidebarFeeds} call={call} pipMode={Boolean(pipMode)} />

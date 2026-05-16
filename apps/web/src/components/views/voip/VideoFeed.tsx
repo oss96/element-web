@@ -37,6 +37,18 @@ interface IProps {
 
     primary?: boolean;
     secondary?: boolean;
+
+    // When set, the mic icon's mute / speaking state is sourced from this feed
+    // instead of `feed`. The <video> element still uses `feed` for its stream.
+    // Used in 1:1 calls to show the local user's own mic state on the primary
+    // (remote) tile.
+    micFeed?: CallFeed;
+
+    // When true, the mic icon overlay is not rendered, no listeners are attached
+    // for mute/speaking changes, and `measureVolumeActivity` is not called.
+    // Used on the secondary local tile when the primary already shows the local
+    // mic state, to avoid a duplicate indicator.
+    hideMicIcon?: boolean;
 }
 
 interface IState {
@@ -51,24 +63,27 @@ export default class VideoFeed extends React.PureComponent<IProps, IState> {
     public constructor(props: IProps) {
         super(props);
 
+        const micSource = props.micFeed ?? props.feed;
         this.state = {
-            audioMuted: this.props.feed.isAudioMuted(),
-            videoMuted: this.props.feed.isVideoMuted(),
-            speaking: this.props.feed.isSpeaking(),
+            audioMuted: micSource.isAudioMuted(),
+            videoMuted: props.feed.isVideoMuted(),
+            speaking: micSource.isSpeaking(),
         };
     }
 
     public componentDidMount(): void {
         this.updateFeed(null, this.props.feed);
-        this.playMedia();
+        this.updateMicSource(null, VideoFeed.getActiveMicSource(this.props));
     }
 
     public componentWillUnmount(): void {
         this.updateFeed(this.props.feed, null);
+        this.updateMicSource(VideoFeed.getActiveMicSource(this.props), null);
     }
 
     public componentDidUpdate(prevProps: IProps, prevState: IState): void {
         this.updateFeed(prevProps.feed, this.props.feed);
+        this.updateMicSource(VideoFeed.getActiveMicSource(prevProps), VideoFeed.getActiveMicSource(this.props));
         // If the mutes state has changed, we try to playMedia()
         if (prevState.videoMuted !== this.state.videoMuted || prevProps.feed.stream !== this.props.feed.stream) {
             this.playMedia();
@@ -76,11 +91,17 @@ export default class VideoFeed extends React.PureComponent<IProps, IState> {
     }
 
     public static getDerivedStateFromProps(props: IProps, state: IState): IState {
+        const micSource = props.micFeed ?? props.feed;
         return {
-            audioMuted: props.feed.isAudioMuted(),
+            audioMuted: micSource.isAudioMuted(),
             videoMuted: props.feed.isVideoMuted(),
             speaking: state.speaking,
         };
+    }
+
+    private static getActiveMicSource(props: IProps): CallFeed | null {
+        if (props.hideMicIcon) return null;
+        return props.micFeed ?? props.feed;
     }
 
     private setElementRef = (element: HTMLVideoElement): void => {
@@ -97,22 +118,38 @@ export default class VideoFeed extends React.PureComponent<IProps, IState> {
         if (oldFeed === newFeed) return;
 
         if (oldFeed) {
-            this.props.feed.removeListener(CallFeedEvent.NewStream, this.onNewStream);
-            this.props.feed.removeListener(CallFeedEvent.MuteStateChanged, this.onMuteStateChanged);
-            this.props.feed.removeListener(CallFeedEvent.Speaking, this.onSpeakingChanged);
-            if (this.props.feed.purpose === SDPStreamMetadataPurpose.Usermedia) {
-                this.props.feed.measureVolumeActivity(false);
-            }
+            oldFeed.removeListener(CallFeedEvent.NewStream, this.onNewStream);
+            oldFeed.removeListener(CallFeedEvent.MuteStateChanged, this.onFeedMuteStateChanged);
             this.stopMedia();
         }
         if (newFeed) {
-            this.props.feed.addListener(CallFeedEvent.NewStream, this.onNewStream);
-            this.props.feed.addListener(CallFeedEvent.MuteStateChanged, this.onMuteStateChanged);
-            this.props.feed.addListener(CallFeedEvent.Speaking, this.onSpeakingChanged);
-            if (this.props.feed.purpose === SDPStreamMetadataPurpose.Usermedia) {
-                this.props.feed.measureVolumeActivity(true);
-            }
+            newFeed.addListener(CallFeedEvent.NewStream, this.onNewStream);
+            newFeed.addListener(CallFeedEvent.MuteStateChanged, this.onFeedMuteStateChanged);
             this.playMedia();
+        }
+    }
+
+    private updateMicSource(oldMicSource: CallFeed | null, newMicSource: CallFeed | null): void {
+        if (oldMicSource === newMicSource) return;
+
+        if (oldMicSource) {
+            oldMicSource.removeListener(CallFeedEvent.MuteStateChanged, this.onMicMuteStateChanged);
+            oldMicSource.removeListener(CallFeedEvent.Speaking, this.onSpeakingChanged);
+            if (oldMicSource.purpose === SDPStreamMetadataPurpose.Usermedia) {
+                oldMicSource.measureVolumeActivity(false);
+            }
+        }
+        if (newMicSource) {
+            newMicSource.addListener(CallFeedEvent.MuteStateChanged, this.onMicMuteStateChanged);
+            newMicSource.addListener(CallFeedEvent.Speaking, this.onSpeakingChanged);
+            if (newMicSource.purpose === SDPStreamMetadataPurpose.Usermedia) {
+                newMicSource.measureVolumeActivity(true);
+            }
+            // CallFeed only emits Speaking on change; pull the current value so a
+            // mic-source swap can't leave the indicator stale.
+            this.setState({ speaking: newMicSource.isSpeaking() });
+        } else {
+            this.setState({ speaking: false });
         }
     }
 
@@ -157,18 +194,21 @@ export default class VideoFeed extends React.PureComponent<IProps, IState> {
     }
 
     private onNewStream = (): void => {
+        const micSource = this.props.micFeed ?? this.props.feed;
         this.setState({
-            audioMuted: this.props.feed.isAudioMuted(),
+            audioMuted: micSource.isAudioMuted(),
             videoMuted: this.props.feed.isVideoMuted(),
         });
         this.playMedia();
     };
 
-    private onMuteStateChanged = (): void => {
-        this.setState({
-            audioMuted: this.props.feed.isAudioMuted(),
-            videoMuted: this.props.feed.isVideoMuted(),
-        });
+    private onFeedMuteStateChanged = (): void => {
+        this.setState({ videoMuted: this.props.feed.isVideoMuted() });
+    };
+
+    private onMicMuteStateChanged = (): void => {
+        const micSource = this.props.micFeed ?? this.props.feed;
+        this.setState({ audioMuted: micSource.isAudioMuted() });
     };
 
     private onSpeakingChanged = (speaking: boolean): void => {
@@ -191,7 +231,7 @@ export default class VideoFeed extends React.PureComponent<IProps, IState> {
         });
 
         let micIcon;
-        if (feed.purpose !== SDPStreamMetadataPurpose.Screenshare && !pipMode) {
+        if (!this.props.hideMicIcon && feed.purpose !== SDPStreamMetadataPurpose.Screenshare && !pipMode) {
             const speakingActive = this.state.speaking && !this.state.audioMuted;
             micIcon = (
                 <div className="mx_VideoFeed_mic" data-speaking={speakingActive || undefined}>
