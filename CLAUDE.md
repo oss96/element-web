@@ -150,7 +150,7 @@ See `BUILDING.md` at the repo root.
   `ElementWidgetActions.DeviceMute` — an upstream-defined bidirectional
   action Element Call already supports. Initial state is seeded by a
   no-op `DeviceMute` send in `onJoin`; in-widget mute changes flow back
-  via `onDeviceMute` and update `CallEvent.AudioMuteState`.
+  via `onDeviceMute` and update `CallEvent.DeviceMuteState`.
 - **Element Call camera toggle: wired up via the widget API.** Same
   `DeviceMute` action as mic, but on the `video_enabled` field. Default
   combo is `Ctrl/Cmd+E` (`ToggleWebcamInCall`), routed through the same
@@ -203,6 +203,41 @@ See `BUILDING.md` at the repo root.
   the nx build cache reliably.** If `lint:types` complains about missing
   declarations, force a vite rebuild:
   `rm -rf packages/shared-components/dist && cd packages/shared-components && pnpm exec vite build`.
+- **`nx start element-web` runs shared-components' `vite build --watch`
+  in parallel with webpack-dev-server (via the `^start` dep).** If
+  webpack starts before the first vite pass finishes, the resolve cache
+  poisons against `dist/element-web-shared-components.css` (or .d.ts)
+  and never retries — the dev server hangs forever on `wait until
+  bundle finished: /`. Workaround: pre-build the shared-components dist
+  (`pnpm -C packages/shared-components exec vite build`) and run
+  `pnpm -C apps/web exec webpack-dev-server …` directly to bypass nx's
+  `^start`. Same root cause as the `.d.ts` gotcha above; different
+  symptom and bypass.
+- **`init.tsx` is sensitive to import-order side effects.** Adding a
+  top-level import that transitively pulls in stores (e.g. `Call.ts`
+  → `WidgetMessagingStore` / `WidgetLayoutStore`) shifts module
+  evaluation order so eagerly-singletoned stores try to access
+  `MatrixClientPeg` before *its* module finishes evaluating, producing
+  `ReferenceError: Cannot access 'MatrixClientPeg' before initialization`
+  at app load. **Lazy-import heavy modules inside the function body,
+  not at the top of the file.** See `apps/web/src/voip/ElementCallShortcuts.ts`
+  for the pattern.
+- **Element Call's widget iframe lives at `document.body`, not in
+  `mx_CallView`.** `PersistedElement` renders the iframe into
+  `#mx_PersistedElement_container` (appended to `<body>`) with inline
+  `position: absolute; z-index: 9`, tracking the wrapper's bounding
+  rect. Any host-side overlay that needs to stack above the iframe
+  must portal to body and track the same way — bumping `mx_CallView`'s
+  z-index above 9 hides the iframe behind `mx_CallView`'s own
+  background. See `CallMicIndicator.tsx` for the portal + ResizeObserver
+  + `timeline_resize` dispatcher pattern.
+- **`widgetApi.transport.send(...)` returns `undefined` in jest mocks.**
+  The default `jest.fn()` setup in `Call-test.ts` doesn't return a
+  Promise, so chaining `.then()` / `.catch()` directly on a send crashes
+  the test worker with `Cannot read properties of undefined (reading 'then')`.
+  Wrap with `Promise.resolve(...)` for robustness against both real
+  Promise returns and bare-undefined stubs (see `onJoin` /
+  `setRemoteAudioMuted` in `Call.ts`).
 - **`AccessibleButton` has its own `onKeyDown`.** Inside the recorder we
   bypass it; if you reintroduce an `AccessibleButton` wrapper around any
   capture surface, expect Enter and Space presses to be hijacked and
