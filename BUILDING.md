@@ -33,30 +33,46 @@ for your Electron version.
 
 ## Build a fresh installer
 
-The three steps are independent — webpack, asar pack, electron-builder.
-Run them in sequence:
+The steps are independent — clean, webpack, desktop TS, asar pack,
+electron-builder. Run them in sequence:
 
 ```bash
-# 1. Clean previous build outputs (skip this on Windows if you're sure the
-#    last build was identical; otherwise old webpack chunks pile up and
-#    push the asar from ~170 MB to ~900 MB).
-rm -rf apps/web/webapp apps/desktop/webapp.asar apps/desktop/dist
+# 1. Clean previous build outputs. Always wipe these together — leaving
+#    any one of them around has produced silent CHECK-aborts on launch
+#    under Electron 42 (see troubleshooting below). The electron-builder
+#    cache in particular holds a fuse-stamped Electron binary whose
+#    embedded asar hash is from a *previous* build's asar; a partial
+#    rebuild leaves the binary expecting the old hash.
+rm -rf apps/web/webapp \
+       apps/desktop/webapp.asar \
+       apps/desktop/dist \
+       apps/desktop/lib
+# PowerShell: Remove-Item -Recurse -Force $env:LOCALAPPDATA\electron-builder\Cache
+rm -rf "$LOCALAPPDATA/electron-builder/Cache"
 
 # 2. Build the web bundle (~80 s).
 pnpm --filter element-web build
 
-# 3. Pack the web output into an asar archive (~10 s).
-pnpm exec asar pack apps/web/webapp apps/desktop/webapp.asar
-
-# 4. Run electron-builder, Squirrel-only.
+# 3. Compile the desktop main-process TS and copy resources into apps/desktop/lib.
+#    The nx `build` target depends on these via `build:*`, but invoking
+#    electron-builder directly (step 5) skips that dep chain — so when lib/
+#    is wiped, you have to run these explicitly or app.asar ends up missing
+#    `lib/electron-main.js` and electron-builder fails the sanity check.
 cd apps/desktop
+pnpm exec nx build:ts element-desktop
+pnpm exec nx build:res element-desktop
+
+# 4. Pack the web output into an asar archive (~10 s).
+pnpm exec asar pack ../web/webapp ./webapp.asar
+
+# 5. Run electron-builder, Squirrel-only.
 pnpm exec electron-builder --win squirrel
 ```
 
 Outputs:
 
 - `apps/desktop/dist/squirrel-windows/Element Setup 1.12.18.exe` — the
-  one-click per-user installer (~186 MB).
+  one-click per-user installer (~180 MB).
 - `apps/desktop/dist/win-unpacked/Element.exe` — if you want to run it
   without installing.
 
@@ -74,9 +90,10 @@ PowerShell), then run without the `--win` flag.
 
 ## Installation
 
-The Squirrel installer drops Element into `%LocalAppData%\Element\` — no
-admin prompt. User data (login, settings, encryption store) lives in
-`%AppData%\Element\` and persists across reinstalls and version upgrades.
+The Squirrel installer drops Element into `%LocalAppData%\element-desktop\`
+(versioned subdirectory `app-1.12.18\`) — no admin prompt. User data
+(login, settings, encryption store) lives in `%AppData%\Element\` and
+persists across reinstalls and version upgrades.
 
 ## Troubleshooting
 
@@ -107,6 +124,32 @@ Then re-run the build (preferably with `--win squirrel` to skip MSI).
 You forgot to `rm -rf apps/web/webapp` before rebuilding. Webpack writes a
 fresh hash-versioned chunk directory on each invocation and never cleans
 up the old ones, so old chunks accumulate. Wipe and rebuild.
+
+### Installer succeeds but the installed Element.exe silently exits on launch
+
+Symptoms:
+- Double-clicking the Start Menu / Desktop shortcut does nothing.
+- No window appears.
+- `%LocalAppData%\CrashDumps\Element.exe.<pid>.dmp` files accumulate, each ~8 MB.
+- The Application event log shows `Exception code: 0x80000003` (STATUS_BREAKPOINT)
+  inside `Element.exe` at a fixed offset, repeatable on every launch.
+- Launching `Element.exe --enable-logging=stderr` reveals the actual cause:
+  `[FATAL:electron\shell\browser\net\asar\asar_file_validator.cc:129]
+   Failed to validate block while ending ASAR file stream: 0`.
+
+Diagnosis: Electron 42 enforces the `enableEmbeddedAsarIntegrityValidation`
+fuse strictly. The fuse stamps a hash of `app.asar` into the executable's
+resource section at build time; if the asar on disk doesn't match, Electron
+hits a `CHECK()` and the process dies before any window appears. With
+electron-builder 26.9.1, a partial rebuild (or a stale
+`%LocalAppData%\electron-builder\Cache`) can leave the binary stamped with
+a hash from a *previous* build's asar.
+
+Fix: do a fully-clean build per step 1 above (including the
+electron-builder Cache wipe). If the symptom recurs after a clean build,
+flip `enableEmbeddedAsarIntegrityValidation: false` in
+`apps/desktop/electron-builder.ts` — it loses one tamper-detection layer
+but is harmless for a personal-fork install.
 
 ### `pnpm install` fails on Windows with "filename too long"
 

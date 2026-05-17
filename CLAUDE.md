@@ -199,6 +199,28 @@ See `BUILDING.md` at the repo root.
 - **`apps/web/webapp/` accumulates webpack chunks across builds.** Run
   `rm -rf apps/web/webapp` before any release build, or the resulting
   `webapp.asar` balloons (912 MB observed vs. 171 MB clean).
+- **Electron 42 + electron-builder 26.9.1 silently crash-loop on launch
+  when the asar integrity stamp is stale.** With
+  `enableEmbeddedAsarIntegrityValidation: true` in `electron-builder.ts`,
+  the executable's resource section holds a hash of `app.asar`; if it
+  doesn't match the actual asar, Electron `CHECK()`s in
+  `asar_file_validator.cc:129` and the process dies before any window
+  appears (`Exception code: 0x80000003` in Event Viewer, no JS error
+  surface). The clean-build recipe in `BUILDING.md` (which now also wipes
+  `apps/desktop/lib` and `%LocalAppData%\electron-builder\Cache`)
+  produces a coherent binary; a partial rebuild that reuses the cached
+  Electron binary does not. `Element.exe --enable-logging=stderr` from
+  the install dir is the fastest way to confirm it's this and not
+  something else.
+- **`pnpm exec electron-builder` skips the nx `build:*` dependency chain.**
+  BUILDING.md's `pnpm exec electron-builder --win squirrel` step runs the
+  packager directly and won't auto-compile `apps/desktop/src/*.ts` into
+  `apps/desktop/lib/`. If you wipe `lib/` (or it's never been built),
+  electron-builder fails with `Application entry file "lib\electron-main.js"
+  in the ... app.asar is corrupted`. Fix: run
+  `pnpm exec nx build:ts element-desktop && pnpm exec nx build:res element-desktop`
+  first, or invoke `nx build element-desktop` instead (but that swallows
+  the `--win squirrel` flag — pass it via `pnpm --filter element-desktop build -- --win squirrel`).
 - **`@element-hq/web-shared-components`'s `.d.ts` files don't survive
   the nx build cache reliably.** If `lint:types` complains about missing
   declarations, force a vite rebuild:
