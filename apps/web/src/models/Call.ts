@@ -88,6 +88,14 @@ export enum CallEvent {
     Close = "close",
     Destroy = "destroy",
     CallTypeChanged = "call_type_changed",
+    DeviceMuteState = "device_mute_state",
+    SpeakingState = "speaking_state",
+}
+
+export interface DeviceMuteState {
+    micMuted: boolean;
+    videoMuted: boolean;
+    remoteAudioMuted: boolean;
 }
 
 interface CallEventHandlerMap {
@@ -99,6 +107,8 @@ interface CallEventHandlerMap {
     [CallEvent.Close]: () => void;
     [CallEvent.Destroy]: () => void;
     [CallEvent.CallTypeChanged]: (callType: CallType) => void;
+    [CallEvent.DeviceMuteState]: (state: DeviceMuteState) => void;
+    [CallEvent.SpeakingState]: (speaking: boolean) => void;
 }
 
 /**
@@ -646,6 +656,138 @@ export class ElementCall extends Call {
 
     public widgetGenerationParameters: WidgetGenerationParameters = {};
 
+    // Mirrored mute state for the user's microphone, camera, and remote audio,
+    // kept in sync with the widget via the bidirectional `DeviceMute` widget
+    // action. Host UI (e.g. the corner pills in CallView) subscribes via
+    // CallEvent.DeviceMuteState. `_remoteAudioMuted` tracks the locally-
+    // requested state for the fork-only MuteRemoteAudio action — currently no
+    // reply is expected because vanilla Element Call ignores it. `_speaking`
+    // is driven from the fork-only SpeakingState widget action and pulses the
+    // mic indicator; also a forward-compatible no-op against vanilla EC.
+    private _micMuted = false;
+    private _videoMuted = false;
+    private _remoteAudioMuted = false;
+    private _speaking = false;
+
+    public get micMuted(): boolean {
+        return this._micMuted;
+    }
+    public get videoMuted(): boolean {
+        return this._videoMuted;
+    }
+    public get remoteAudioMuted(): boolean {
+        return this._remoteAudioMuted;
+    }
+    public get speaking(): boolean {
+        return this._speaking;
+    }
+
+    private updateMuteState(next: { micMuted?: boolean; videoMuted?: boolean; remoteAudioMuted?: boolean }): void {
+        const prevMic = this._micMuted;
+        const prevVideo = this._videoMuted;
+        const prevRemote = this._remoteAudioMuted;
+        if (typeof next.micMuted === "boolean") this._micMuted = next.micMuted;
+        if (typeof next.videoMuted === "boolean") this._videoMuted = next.videoMuted;
+        if (typeof next.remoteAudioMuted === "boolean") this._remoteAudioMuted = next.remoteAudioMuted;
+        if (
+            this._micMuted !== prevMic ||
+            this._videoMuted !== prevVideo ||
+            this._remoteAudioMuted !== prevRemote
+        ) {
+            this.emit(CallEvent.DeviceMuteState, {
+                micMuted: this._micMuted,
+                videoMuted: this._videoMuted,
+                remoteAudioMuted: this._remoteAudioMuted,
+            });
+        }
+    }
+
+    private updateSpeakingState(speaking: boolean): void {
+        if (this._speaking === speaking) return;
+        this._speaking = speaking;
+        this.emit(CallEvent.SpeakingState, speaking);
+    }
+
+    /**
+     * Request the widget to apply a specific microphone mute state. Resolves to
+     * the resulting state reported by the widget (which may differ from the
+     * requested value if the widget rejects the change). Falls back to the
+     * requested value when the widget API is unavailable or doesn't echo
+     * `audio_enabled` in its reply.
+     */
+    public async setMicrophoneMuted(muted: boolean): Promise<boolean> {
+        if (!this.widgetApi) {
+            this.updateMuteState({ micMuted: muted });
+            return muted;
+        }
+        try {
+            const reply = (await this.widgetApi.transport.send(ElementWidgetActions.DeviceMute, {
+                audio_enabled: !muted,
+            })) as { audio_enabled?: boolean } | undefined;
+            const next = typeof reply?.audio_enabled === "boolean" ? !reply.audio_enabled : muted;
+            this.updateMuteState({ micMuted: next });
+            return next;
+        } catch (err) {
+            logger.warn("ElementCall: setMicrophoneMuted failed", err);
+            this.updateMuteState({ micMuted: muted });
+            return muted;
+        }
+    }
+
+    public async toggleMicrophoneMuted(): Promise<boolean> {
+        return this.setMicrophoneMuted(!this._micMuted);
+    }
+
+    /**
+     * Request the widget to apply a specific camera mute state. Mirrors
+     * `setMicrophoneMuted` but on `video_enabled`.
+     */
+    public async setVideoMuted(muted: boolean): Promise<boolean> {
+        if (!this.widgetApi) {
+            this.updateMuteState({ videoMuted: muted });
+            return muted;
+        }
+        try {
+            const reply = (await this.widgetApi.transport.send(ElementWidgetActions.DeviceMute, {
+                video_enabled: !muted,
+            })) as { video_enabled?: boolean } | undefined;
+            const next = typeof reply?.video_enabled === "boolean" ? !reply.video_enabled : muted;
+            this.updateMuteState({ videoMuted: next });
+            return next;
+        } catch (err) {
+            logger.warn("ElementCall: setVideoMuted failed", err);
+            this.updateMuteState({ videoMuted: muted });
+            return muted;
+        }
+    }
+
+    public async toggleVideoMuted(): Promise<boolean> {
+        return this.setVideoMuted(!this._videoMuted);
+    }
+
+    /**
+     * Send a `MuteRemoteAudio` widget action and reflect the requested state on
+     * the host. Vanilla Element Call does not yet handle the action, so this
+     * effectively only updates the host-side indicator until upstream support
+     * lands — see ElementWidgetActions.ts for the action contract.
+     */
+    public setRemoteAudioMuted(muted: boolean): void {
+        if (this.widgetApi) {
+            // Promise.resolve guards against test/transport stubs that return
+            // undefined synchronously rather than a Promise.
+            Promise.resolve(
+                this.widgetApi.transport.send(ElementWidgetActions.MuteRemoteAudio, { audio_enabled: !muted }),
+            ).catch((err) => logger.warn("ElementCall: setRemoteAudioMuted send failed", err));
+        }
+        this.updateMuteState({ remoteAudioMuted: muted });
+    }
+
+    public toggleRemoteAudioMuted(): boolean {
+        const next = !this._remoteAudioMuted;
+        this.setRemoteAudioMuted(next);
+        return next;
+    }
+
     /**
      * Calculate the correct intent (and associated parameters) for an Element Call room. Paarameters
      * will be applied to the `params` instance.
@@ -904,6 +1046,7 @@ export class ElementCall extends Call {
         widgetApi.on(`action:${ElementWidgetActions.HangupCall}`, this.onHangup);
         widgetApi.on(`action:${ElementWidgetActions.Close}`, this.onClose);
         widgetApi.on(`action:${ElementWidgetActions.DeviceMute}`, this.onDeviceMute);
+        widgetApi.on(`action:${ElementWidgetActions.SpeakingState}`, this.onSpeakingState);
         return widgetApi;
     }
 
@@ -930,6 +1073,7 @@ export class ElementCall extends Call {
         this.widgetApi!.off(`action:${ElementWidgetActions.HangupCall}`, this.onHangup);
         this.widgetApi!.off(`action:${ElementWidgetActions.Close}`, this.onClose);
         this.widgetApi!.off(`action:${ElementWidgetActions.DeviceMute}`, this.onDeviceMute);
+        this.widgetApi!.off(`action:${ElementWidgetActions.SpeakingState}`, this.onSpeakingState);
         super.close();
     }
 
@@ -977,6 +1121,24 @@ export class ElementCall extends Call {
 
     private readonly onDeviceMute = (ev: CustomEvent<IWidgetApiRequest>): void => {
         ev.preventDefault();
+        // fromWidget direction: the widget is informing the host about its current
+        // device mute state. Mirror both `audio_enabled` and `video_enabled` onto
+        // our internal flags so the host indicators stay in sync with in-widget
+        // mute presses.
+        const data = ev.detail.data as { audio_enabled?: boolean; video_enabled?: boolean } | undefined;
+        const update: { micMuted?: boolean; videoMuted?: boolean } = {};
+        if (data && typeof data.audio_enabled === "boolean") update.micMuted = !data.audio_enabled;
+        if (data && typeof data.video_enabled === "boolean") update.videoMuted = !data.video_enabled;
+        if (Object.keys(update).length > 0) this.updateMuteState(update);
+        this.widgetApi!.transport.reply(ev.detail, {}); // ack
+    };
+
+    private readonly onSpeakingState = (ev: CustomEvent<IWidgetApiRequest>): void => {
+        ev.preventDefault();
+        const data = ev.detail.data as { speaking?: boolean } | undefined;
+        if (data && typeof data.speaking === "boolean") {
+            this.updateSpeakingState(data.speaking);
+        }
         this.widgetApi!.transport.reply(ev.detail, {}); // ack
     };
 
@@ -984,6 +1146,21 @@ export class ElementCall extends Call {
         ev.preventDefault();
         this.widgetApi!.transport.reply(ev.detail, {}); // ack
         this.setConnected();
+        // Best-effort read of the widget's initial mic + video state. An empty
+        // DeviceMute payload asks the widget to report (not change) its current
+        // configuration; the reply seeds our local flags so the host indicators
+        // start correct. Wrap in `Promise.resolve` because some widget API mocks
+        // (and edge cases where transport isn't fully connected) return undefined
+        // synchronously.
+        Promise.resolve(this.widgetApi!.transport.send(ElementWidgetActions.DeviceMute, {}))
+            .then((reply) => {
+                const next = reply as { audio_enabled?: boolean; video_enabled?: boolean } | undefined;
+                const update: { micMuted?: boolean; videoMuted?: boolean } = {};
+                if (next && typeof next.audio_enabled === "boolean") update.micMuted = !next.audio_enabled;
+                if (next && typeof next.video_enabled === "boolean") update.videoMuted = !next.video_enabled;
+                if (Object.keys(update).length > 0) this.updateMuteState(update);
+            })
+            .catch((err) => logger.warn("ElementCall: initial DeviceMute probe failed", err));
     };
 
     private readonly onHangup = async (ev: CustomEvent<IWidgetApiRequest>): Promise<void> => {

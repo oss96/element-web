@@ -43,6 +43,22 @@ export enum ElementWidgetActions {
     // NOTE: this is currently unused. Its only here to make EW aware
     // of this action so it does not throw errors.
     DeviceMute = "io.element.device_mute",
+
+    // Fork-defined action. Sent toWidget to request that the widget mutes or
+    // unmutes its remote/incoming audio output. Vanilla Element Call has no
+    // handler for this today and will ignore the message; the action is in
+    // place so the host-side toggle works end-to-end as soon as a custom
+    // Element Call build ships a matching handler. Payload mirrors DeviceMute
+    // with a single `audio_enabled` field.
+    MuteRemoteAudio = "io.element.mute_remote_audio",
+
+    // Fork-defined fromWidget action. The widget should send this as voice
+    // activity detection state changes for the local participant, so the host
+    // can drive a speaking-pulse animation on its mic indicator. Vanilla
+    // Element Call does not currently emit this; the action is in place so
+    // the pulse lights up as soon as a custom Element Call build adopts it.
+    // Payload: { speaking: boolean }.
+    SpeakingState = "io.element.speaking_state",
 }
 
 export interface IHangupCallApiRequest extends IWidgetApiRequest {

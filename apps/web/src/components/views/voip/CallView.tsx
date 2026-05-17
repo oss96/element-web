@@ -6,16 +6,17 @@ SPDX-License-Identifier: AGPL-3.0-only OR GPL-3.0-only OR LicenseRef-Element-Com
 Please see LICENSE files in the repository root for full details.
 */
 
-import React, { type FC, useContext, useEffect, type AriaRole, useCallback } from "react";
+import React, { type FC, useContext, useEffect, type AriaRole, useCallback, useRef } from "react";
 
 import type { Room } from "matrix-js-sdk/src/matrix";
-import { type Call, CallEvent } from "../../../models/Call";
+import { type Call, CallEvent, ElementCall } from "../../../models/Call";
 import MatrixClientContext from "../../../contexts/MatrixClientContext";
 import AppTile from "../elements/AppTile";
 import { CallStore } from "../../../stores/CallStore";
 import { SdkContextClass } from "../../../contexts/SDKContext";
 import { useTypedEventEmitter } from "../../../hooks/useEventEmitter";
 import { useCall } from "../../../hooks/useCall";
+import { CallMicIndicator } from "./CallMicIndicator";
 
 interface JoinCallViewProps {
     room: Room;
@@ -27,6 +28,7 @@ interface JoinCallViewProps {
 
 const JoinCallView: FC<JoinCallViewProps> = ({ room, resizing, call, role, onClose }) => {
     const cli = useContext(MatrixClientContext);
+    const callViewRef = useRef<HTMLDivElement>(null);
     useTypedEventEmitter(call, CallEvent.Close, onClose);
 
     useEffect(() => {
@@ -44,7 +46,7 @@ const JoinCallView: FC<JoinCallViewProps> = ({ room, resizing, call, role, onClo
     }, []);
 
     return (
-        <div className="mx_CallView" role={role}>
+        <div className="mx_CallView" role={role} ref={callViewRef}>
             <AppTile
                 app={call.widget}
                 room={room}
@@ -55,6 +57,7 @@ const JoinCallView: FC<JoinCallViewProps> = ({ room, resizing, call, role, onClo
                 pointerEvents={resizing ? "none" : undefined}
                 stickyPromise={disconnectAllOtherCalls}
             />
+            {call instanceof ElementCall && <CallMicIndicator call={call} containerRef={callViewRef} />}
         </div>
     );
 };

@@ -3961,6 +3961,8 @@
         "metaspace_video_rooms": {
             "conference_room_section": "Conferences"
         },
+        "mic_indicator_muted": "Your microphone is muted",
+        "mic_indicator_unmuted": "Your microphone is on",
         "minimise_call": "Minimise call",
         "misconfigured_server": "Call failed due to misconfigured server",
         "misconfigured_server_description": "Please ask the administrator of your homeserver (<code>%(homeserverDomain)s</code>) to configure a TURN server in order for calls to work reliably.",
@@ -3982,6 +3984,8 @@
         "no_permission_conference_description": "You do not have permission to start a conference call in this room",
         "on_hold": "%(name)s on hold",
         "output_devices": "Output devices",
+        "remote_audio_indicator_muted": "Incoming audio is muted",
+        "remote_audio_indicator_unmuted": "Incoming audio is on",
         "screenshare_audio_byline_window": "System audio sharing only works for entire screens.",
         "screenshare_audio_label": "Also share audio",
         "screenshare_monitor": "Share entire screen",
@@ -4012,6 +4016,8 @@
         "video_call": "Video call",
         "video_call_incoming": "Incoming video call",
         "video_call_using": "Video call using:",
+        "video_indicator_muted": "Your camera is off",
+        "video_indicator_unmuted": "Your camera is on",
         "voice_call": "Voice call",
         "voice_call_incoming": "Incoming voice call",
         "voice_call_using": "Voice call using:",

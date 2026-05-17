@@ -16,6 +16,7 @@ import { ModuleLoader } from "@element-hq/element-web-module-api";
 import * as languageHandler from "../languageHandler";
 import SettingsStore from "../settings/SettingsStore";
 import { startGlobalShortcutsBridge } from "../accessibility/GlobalShortcutsBridge";
+import { startElementCallShortcuts } from "../voip/ElementCallShortcuts";
 import PlatformPeg from "../PlatformPeg";
 import SdkConfig from "../SdkConfig";
 import { setTheme } from "../theme";
@@ -44,6 +45,9 @@ export function preparePlatform(): void {
     // No-op on non-Electron builds; otherwise pushes the user's global hotkey
     // selection to the main process and wires up dispatch back into the renderer.
     startGlobalShortcutsBridge();
+    // Document-level handler that forwards mic / incoming-audio shortcuts to the
+    // active Element Call (group) widget. Inert when no such call is connected.
+    startElementCallShortcuts();
 }
 
 export function setupLogStorage(): Promise<void> {
