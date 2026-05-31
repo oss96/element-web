@@ -203,6 +203,10 @@
     },
     "timeline": {
         "call_tile": {
+            "declined": {
+                "call_declined": "Call declined",
+                "call_declined_by_us": "You declined a call"
+            },
             "video_call_title": "Video call",
             "voice_call_title": "Voice call"
         },
@@ -217,6 +221,7 @@
         },
         "download_action_decrypting": "Decrypting",
         "download_action_downloading": "Downloading",
+        "e2e_state": "State of the end-to-end encryption",
         "m.audio": {
             "audio_player": "Audio player",
             "error_downloading_audio": "Error downloading audio",
@@ -246,6 +251,7 @@
             "label": "Message Actions",
             "view_in_room": "View in room"
         },
+        "message_shared_by": "%(displayName)s (%(userId)s) shared this message since you were not in the room when it was sent.",
         "message_timestamp_received_at": "Received at: %(dateTime)s",
         "message_timestamp_sent_at": "Sent at: %(dateTime)s",
         "mjolnir": {
