@@ -335,6 +335,20 @@ legacy 1:1 or an Element Call group session.
 - `apps/web/test/unit-tests/components/views/settings/tabs/user/__snapshots__/KeyboardUserSettingsTab-test.tsx.snap`
   — large snapshot churn for the editable rows.
 
+### Build tooling
+
+- `package.json` (root) — removes the `devEngines.packageManager` block.
+  Upstream's pnpm 11.2.2 self-manages its own version (driven by that block)
+  by prepending a `packageManagerDependencies` document to `pnpm-lock.yaml`,
+  producing a two-document YAML that nx 22.7.4's lockfile parser rejects
+  (`expected a single document in the stream, but found more`), which breaks
+  every nx-driven script (`nx build`, `pnpm -r lint:types`, `nx start`).
+  Removing the block makes pnpm write a single-document lockfile. The real
+  dependency document is byte-identical to upstream; only the self-management
+  document is dropped. Install with `corepack pnpm@11.2.2 install`. This is a
+  build-tooling workaround, not a feature — re-apply after any upstream merge
+  that restores the block (see CLAUDE.md, pnpm-11/nx gotcha).
+
 ---
 
 ## New surface
@@ -430,6 +444,9 @@ legacy 1:1 or an Element Call group session.
 
 Likely friction points when merging `upstream/develop`:
 
+- `package.json` (root) — the removed `devEngines.packageManager` block. A
+  merge that re-adds or edits it re-introduces the two-document lockfile and
+  breaks nx until the removal is re-applied and the lockfile regenerated.
 - `apps/web/src/settings/Settings.tsx` — interface entries are
   alphabetically grouped; new neighbours of `Keyboard.*` will conflict.
 - `apps/web/src/accessibility/KeyboardShortcuts.ts` — additions sit next

@@ -137,6 +137,12 @@ isn't reflected here is invisible to the next session.
   is an `ElementCall`.
 - `apps/web/src/vector/init.tsx` — also calls
   `startElementCallShortcuts()` from `preparePlatform`.
+- `package.json` (root) — build-tooling fix, not a feature: the
+  `devEngines.packageManager` block is removed so pnpm 11 writes a
+  single-document `pnpm-lock.yaml` that nx 22.7.4 can parse. The real
+  dependency document in the lockfile stays byte-identical to upstream.
+  See the pnpm-11/nx gotcha. Must be re-applied after any upstream merge
+  that restores the block.
 
 ## Build / installer
 
@@ -221,10 +227,34 @@ See `BUILDING.md` at the repo root.
   `pnpm exec nx build:ts element-desktop && pnpm exec nx build:res element-desktop`
   first, or invoke `nx build element-desktop` instead (but that swallows
   the `--win squirrel` flag — pass it via `pnpm --filter element-desktop build -- --win squirrel`).
+- **pnpm 11 writes a two-document `pnpm-lock.yaml` that nx 22.7.4 cannot
+  parse.** Upstream moved to pnpm 11.2.2 (`Update pnpm to v11`, #33573).
+  Driven by the `devEngines.packageManager` block in the root `package.json`,
+  pnpm 11 self-manages its own version by **prepending a
+  `packageManagerDependencies` YAML document** to the lockfile (so the file
+  begins `---` / `lockfileVersion: '9.0'` … `---` / `lockfileVersion: '9.0'`).
+  nx 22.7.4's `nx/js/dependencies-and-lockfile` plugin parses the lockfile as
+  a single document, so every nx-driven script (`nx build`,
+  `pnpm -r lint:types`, `nx start`, the full `pnpm build`) dies at graph
+  construction with `Failed to process project graph … expected a single
+  document in the stream, but found more`. **Fix applied in this fork:** the
+  `devEngines.packageManager` block is removed from the root `package.json`,
+  which makes pnpm write a single-document lockfile. The real dependency
+  document is byte-identical to upstream's — only the self-management document
+  is dropped. `managePackageManagerVersions: false` alone does **not** help
+  (the document is gated by `devEngines`, not that setting). Because pnpm no
+  longer enforces its own version, install via `corepack pnpm@11.2.2 install
+  --config.confirmModulesPurge=false`. **Re-apply this removal after any
+  upstream merge that restores the block**, then regenerate the lockfile
+  (`sed -i '1,199d' pnpm-lock.yaml` to drop the stale first doc, then
+  `corepack pnpm@11.2.2 install`).
 - **`@element-hq/web-shared-components`'s `.d.ts` files don't survive
   the nx build cache reliably.** If `lint:types` complains about missing
   declarations, force a vite rebuild:
   `rm -rf packages/shared-components/dist && cd packages/shared-components && pnpm exec vite build`.
+  (After a fresh upstream sync the dists are simply stale — once nx can parse
+  the lockfile again, `pnpm --filter @element-hq/web-shared-components build`
+  refreshes them and the `has no exported member …` errors clear.)
 - **`nx start element-web` runs shared-components' `vite build --watch`
   in parallel with webpack-dev-server (via the `^start` dep).** If
   webpack starts before the first vite pass finishes, the resolve cache
@@ -276,7 +306,19 @@ git merge upstream/develop  # or rebase — same effect, fork is fast-forward-on
 git push
 ```
 
+Upstream is on **pnpm 11.2.2** (object-form `devEngines.packageManager`, no
+corepack `packageManager` string). The fork never touches dependency files,
+so a merge takes upstream's `package.json` / `pnpm-lock.yaml` wholesale. After
+merging: re-strip the `devEngines.packageManager` block from the root
+`package.json` and regenerate a single-document lockfile (see the pnpm-11/nx
+gotcha), then `corepack pnpm@11.2.2 install --config.confirmModulesPurge=false`.
+Last full sync: **2026-05-31**, merging up to upstream `32b66747f4`. That tip
+pins `matrix-js-sdk#develop` (commit `68e5cdea`) whose TS-6.0 `.ts`-extension
+source breaks `lint:types` (4 errors) and jest (setup crash) but **not** the
+webpack build — an upstream develop-on-develop pairing issue, not a fork bug.
+
 Likely conflict sites if upstream churns:
+- `package.json` (root) — the removed `devEngines.packageManager` block; a merge that re-adds or edits it will re-introduce the two-document lockfile and break nx until the removal is re-applied.
 - `apps/web/src/settings/Settings.tsx` — interface entries are alphabetically grouped; new neighbours will conflict.
 - `apps/web/src/i18n/strings/en_EN.json` — adjacent keyboard and voip keys.
 - `apps/web/src/accessibility/KeyboardShortcutUtils.ts` — small surface, low risk.
@@ -296,14 +338,30 @@ pnpm exec jest --testPathPatterns="(KeyBinding|Keyboard)"
 because `window.electron` is undefined in jsdom — the desktop-only Global
 toggle is hidden in the snapshot.
 
+> **As of the 2026-05-31 sync, jest can't run at all.** `test/setupTests.ts`
+> imports `matrix-js-sdk/src/...`, and the `matrix-js-sdk#develop` snapshot
+> upstream pins uses TS-6.0 `.ts`-extension imports jest's transform config
+> doesn't handle, so every suite fails at setup (`SyntaxError: Cannot use
+> import statement outside a module`). Upstream develop-on-develop pairing
+> issue, not a fork regression; clears when upstream realigns its SDK pin or
+> jest transform. The fork's own test code is unchanged and still type-checks.
+
 ## Lint pipeline
 
 ```bash
-pnpm lint:types   # nx tsc across web + desktop + packages
-pnpm lint:js      # eslint with --max-warnings 0
-pnpm lint:style   # stylelint res/css/**/*.pcss
+pnpm -r lint:types   # nx tsc across web + desktop + packages
+pnpm -r lint:js      # eslint with --max-warnings 0
+pnpm -r lint:style   # stylelint res/css/**/*.pcss
+pnpm lint:prettier   # prettier --check .
 ```
 
-All three must be clean before `pnpm build` will produce a shippable web
-bundle. `pnpm i18n` (which runs `matrix-i18n-lint` internally) must also
-pass after any new `_t()` / `_td()` strings.
+(pnpm 11 dropped the root `pnpm lint:types` shorthand; the root `lint` script
+chains the recursive `-r` forms above.) All must be clean before `pnpm build`
+will produce a shippable web bundle. `pnpm i18n` (which runs `matrix-i18n-lint`
+internally) must also pass after any new `_t()` / `_td()` strings.
+
+> **As of the 2026-05-31 sync, `pnpm -r lint:types` reports 4 errors, all
+> inside the pinned `matrix-js-sdk#develop` source** (`MSC4108SignInWithQR.ts`,
+> `rust-crypto.ts`) — none in fork or app code. Same upstream SDK-pairing root
+> cause as the jest note above; the webpack build (`pnpm --filter element-web
+> build`) stays green because it transpiles rather than type-checks.
