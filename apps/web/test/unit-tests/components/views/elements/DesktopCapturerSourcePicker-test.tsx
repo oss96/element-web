@@ -130,4 +130,27 @@ describe("DesktopCapturerSourcePicker", () => {
 
         expect(onFinished).toHaveBeenCalledWith({ source: SOURCES[1], shareAudio: false });
     });
+
+    it("should keep the audio checkbox enabled on the window tab when allowWindowAudio is set", async () => {
+        const onFinished = jest.fn();
+        render(<DesktopCapturerSourcePicker onFinished={onFinished} offerAudio={true} allowWindowAudio={true} />);
+
+        await userEvent.click(screen.getByRole("tab", { name: "Application window" }));
+        const checkbox = screen.getByRole("checkbox", { name: "Also share audio" });
+        expect(checkbox).not.toBeDisabled();
+    });
+
+    it("should return shareAudio: true for a window source when allowWindowAudio is set", async () => {
+        const onFinished = jest.fn();
+        render(<DesktopCapturerSourcePicker onFinished={onFinished} offerAudio={true} allowWindowAudio={true} />);
+
+        await userEvent.click(screen.getByRole("checkbox", { name: "Also share audio" }));
+        await userEvent.click(screen.getByRole("tab", { name: "Application window" }));
+
+        const window1Button = await screen.findByRole("button", { name: "Window 1" });
+        await userEvent.click(window1Button);
+        await userEvent.click(screen.getByRole("button", { name: "Share" }));
+
+        expect(onFinished).toHaveBeenCalledWith({ source: SOURCES[1], shareAudio: true });
+    });
 });

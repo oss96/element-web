@@ -18,7 +18,7 @@ The fork has three interlocking goals:
 3. **Extend the call shortcuts and feedback into the group call (Element
    Call) surface** — the mic toggle now talks to the Element Call widget via
    `io.element.device_mute`, the incoming-audio toggle ships a host-side
-   widget action (forward-compatible — see *Known limitations*), and a small
+   widget action (forward-compatible — see _Known limitations_), and a small
    pill in the top-left of the in-room call view mirrors mic / incoming-audio
    mute state so users can see at a glance what the host page knows.
 
@@ -57,7 +57,7 @@ Element.
 Combos that aren't safely globaliseable (no non-Shift modifier and not an
 F13–F24 key) get the Make-global control disabled. F13–F24 are whitelisted
 because they rarely conflict with system hotkeys — handy for users who remap
-mouse-side-buttons to F-keys with vendor software (see *Known limitations*).
+mouse-side-buttons to F-keys with vendor software (see _Known limitations_).
 
 ### 3. Numpad-aware bindings
 
@@ -100,10 +100,10 @@ or incoming-audio mute. Distinct pitches for "going live" vs "muted", and
 distinct frequency pairs for mic vs incoming-audio so quick consecutive
 toggles stay aurally distinct:
 
-| Action | Muted → | Unmuted → |
-|---|---|---|
-| Mic toggle | 440 Hz | 880 Hz |
-| Incoming-audio toggle | 330 Hz | 660 Hz |
+| Action                | Muted → | Unmuted → |
+| --------------------- | ------- | --------- |
+| Mic toggle            | 440 Hz  | 880 Hz    |
+| Incoming-audio toggle | 330 Hz  | 660 Hz    |
 
 Fired from `LegacyCallView.onMicMuteClick` (only when the SDK actually
 flipped) and from the `ToggleIncomingAudioInCall` handler.
@@ -120,8 +120,8 @@ gated by a `data-speaking` attribute and a CSS keyframe pulse
 
 In a 1:1 legacy call the primary tile shows the remote person and the
 secondary tile shows the local user. By default the primary tile's mic icon
-would render the *remote* user's mic state — i.e. the user can't see whether
-*their own* mic is hot. Two changes fix this:
+would render the _remote_ user's mic state — i.e. the user can't see whether
+_their own_ mic is hot. Two changes fix this:
 
 - `VideoFeed` accepts a new `micFeed?: CallFeed` prop. When set, the mic
   icon's mute and speaking state come from `micFeed` instead of `feed`; the
@@ -141,10 +141,35 @@ source changes.
 `LegacyCallView.onScreenshareClick` now requests audio from `getDisplayMedia`
 (`setScreensharingEnabled(true, { audio: true })`). Desktop builds open the
 custom `DesktopCapturerSourcePicker` which now exposes an "Also share audio"
-checkbox; the option is disabled with a byline when an Application window
-is selected, because Chromium's audio loopback only works for whole screens.
-The main-process display-media handler returns `audio: "loopback"` on
-Windows/macOS (skipped on Linux where Electron's behaviour is undefined).
+checkbox. For whole-screen sources the main-process display-media handler
+returns `audio: "loopback"` (system-wide WASAPI loopback) on Windows/macOS
+(skipped on Linux where Electron's behaviour is undefined).
+
+Because audio is always _requested_ (so the checkbox can be offered), the
+main-process handler must **omit** the `audio` key entirely when the user
+declines — passing `audio: undefined` makes Electron's `result_dict.Has("audio")`
+true and then rejects the whole capture with "Invalid capture constraints"
+(`callDisplayMediaCallback` in `ipc.ts`; see the CLAUDE.md gotcha).
+
+**Per-application audio for window sources (Windows only).** When the picked
+source is an Application window on Windows, the handler instead returns
+`audio: { id: "applicationLoopback:<pid>", name: "Application Audio" }` —
+Chromium ≥141's process-loopback input device
+(`AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK`, captures the window's whole
+process tree), smuggled through the intentional-but-undocumented raw
+`{ id, name }` escape hatch in Electron's `setDisplayMediaRequestHandler`
+result parsing (`electron_browser_context.cc`). The window's HWND (from the
+`window:<hwnd>:<n>` source id) is resolved to its owning PID by
+`apps/desktop/src/windowAudio.ts` via a one-shot PowerShell P/Invoke of
+`GetWindowThreadProcessId` — no native module. If the lookup fails the share
+proceeds without audio (never silently widens to full system audio). On
+non-Windows platforms the checkbox stays disabled-with-byline on the window
+tab, gated by a `windowAudioSupported` flag the main process sends in the
+`openDesktopCapturerSourcePicker` payload.
+
+Known per-application caveats: audio follows the _process tree_ (sharing one
+Firefox window shares all Firefox audio); UWP windows resolve to
+`ApplicationFrameHost`, so their actual app audio is likely missed.
 
 Browser builds fall back to the platform-native picker's own "Share tab
 audio" option.
@@ -178,8 +203,8 @@ legacy 1:1 or an Element Call group session.
   `ElementWidgetActions.MuteRemoteAudio = "io.element.mute_remote_audio"`,
   payload mirrors `DeviceMute`. Vanilla Element Call ignores unknown
   actions, so the host-side shortcut updates the local pill and plays the
-  cue but doesn't currently change the remote audio output — see *Known
-  limitations* for the upstream-handler requirement.
+  cue but doesn't currently change the remote audio output — see _Known
+  limitations_ for the upstream-handler requirement.
 - **Widget channel — speaking pulse**: new fork-defined fromWidget action
   `ElementWidgetActions.SpeakingState = "io.element.speaking_state"`,
   payload `{ speaking: boolean }`. Drives the green pulse on the mic pill
@@ -208,18 +233,19 @@ legacy 1:1 or an Element Call group session.
 
 ## New files
 
-| File | Role |
-|---|---|
-| `apps/web/src/accessibility/KeyboardShortcutsCustomization.ts` | Store + capture helpers: `getUserShortcutOverrides`, `set/clearUserShortcutOverride`, `setUserShortcutCleared`, `isComboCleared`, `clearAllUserShortcutOverrides`, `get/setShortcutGlobal`, `getGlobalShortcutActions`, `isShortcutGlobal`, `captureCombo`, `comboCanBeGlobal`, `toElectronAccelerator`, `combosEqual`, `findConflicts`, `dispatchSyntheticKeyEvent`. |
-| `apps/web/src/accessibility/GlobalShortcutsBridge.ts` | Renderer half of the desktop bridge. `startGlobalShortcutsBridge()` is called from `init.tsx::preparePlatform`. Sends `setGlobalShortcuts` IPC on settings change; reacts to `globalShortcutFired` by dispatching a synthetic `KeyboardEvent` at `document`. |
-| `apps/web/src/components/views/settings/KeyboardShortcutEditor.tsx` | Row component. Listens at `document` capture phase while recording; renders the edit trigger, Make-global toggle, Clear (`✕`), Reset (`↺`), and conflict warning. |
-| `apps/web/src/audio/CallMuteTones.ts` | `playMicToggleTone` / `playIncomingAudioToggleTone` — Web Audio sine blips. Shared `AudioContext`, resumed inside the user-gesture handler. |
-| `apps/web/src/voip/ElementCallShortcuts.ts` | Document-level keydown bridge for the active Element Call (group) call. `startElementCallShortcuts()` is idempotent and called from `init.tsx::preparePlatform`. Resolves the current call via `CallStore.instance.connectedCalls`, calls `toggleMicrophoneMuted` / `toggleRemoteAudioMuted` on it, and plays the existing mute-tone cues. |
-| `apps/web/src/components/views/voip/CallMicIndicator.tsx` | Two-pill overlay rendered via `React.createPortal` into `document.body`. Position-fixed-tracks the `mx_CallView` host div (ResizeObserver + window resize + `timeline_resize` dispatcher action, mirroring `PersistedElement.updateChildPosition`) and stacks at `z-index: 10` so it draws over the Element Call iframe (which `PersistedElement` mounts at body level with `z-index: 9`). Subscribes to `CallEvent.AudioMuteState` via `useTypedEventEmitterState` and renders Mic + Volume solid icons that turn red when the corresponding stream is muted. |
-| `apps/web/res/css/views/voip/_CallMicIndicator.pcss` | Styles for the `CallMicIndicator` pills (`position: fixed`, `z-index: 10`, 24×24 circle, `$alert` muted variant, `pointer-events: none`). |
-| `apps/desktop/src/globalShortcuts.ts` | Main-process registrar. Tracks its own registered set, unregisters before each new payload, silently skips combos already taken by the OS. Exposes `releaseGlobalShortcuts()` for `beforeQuit`. |
-| `apps/web/res/css/views/settings/tabs/user/_KeyboardUserSettingsTab.pcss` | Layout for the recorder, the global toggle, conflict warning, and the Reset-all row. (Was a stub upstream; rewritten here.) |
-| `apps/web/test/unit-tests/accessibility/KeyboardShortcutsCustomization-test.ts` | Unit tests for the pure helpers. |
+| File                                                                            | Role                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web/src/accessibility/KeyboardShortcutsCustomization.ts`                  | Store + capture helpers: `getUserShortcutOverrides`, `set/clearUserShortcutOverride`, `setUserShortcutCleared`, `isComboCleared`, `clearAllUserShortcutOverrides`, `get/setShortcutGlobal`, `getGlobalShortcutActions`, `isShortcutGlobal`, `captureCombo`, `comboCanBeGlobal`, `toElectronAccelerator`, `combosEqual`, `findConflicts`, `dispatchSyntheticKeyEvent`.                                                                                                                                                                                          |
+| `apps/web/src/accessibility/GlobalShortcutsBridge.ts`                           | Renderer half of the desktop bridge. `startGlobalShortcutsBridge()` is called from `init.tsx::preparePlatform`. Sends `setGlobalShortcuts` IPC on settings change; reacts to `globalShortcutFired` by dispatching a synthetic `KeyboardEvent` at `document`.                                                                                                                                                                                                                                                                                                   |
+| `apps/web/src/components/views/settings/KeyboardShortcutEditor.tsx`             | Row component. Listens at `document` capture phase while recording; renders the edit trigger, Make-global toggle, Clear (`✕`), Reset (`↺`), and conflict warning.                                                                                                                                                                                                                                                                                                                                                                                              |
+| `apps/web/src/audio/CallMuteTones.ts`                                           | `playMicToggleTone` / `playIncomingAudioToggleTone` — Web Audio sine blips. Shared `AudioContext`, resumed inside the user-gesture handler.                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `apps/web/src/voip/ElementCallShortcuts.ts`                                     | Document-level keydown bridge for the active Element Call (group) call. `startElementCallShortcuts()` is idempotent and called from `init.tsx::preparePlatform`. Resolves the current call via `CallStore.instance.connectedCalls`, calls `toggleMicrophoneMuted` / `toggleRemoteAudioMuted` on it, and plays the existing mute-tone cues.                                                                                                                                                                                                                     |
+| `apps/web/src/components/views/voip/CallMicIndicator.tsx`                       | Two-pill overlay rendered via `React.createPortal` into `document.body`. Position-fixed-tracks the `mx_CallView` host div (ResizeObserver + window resize + `timeline_resize` dispatcher action, mirroring `PersistedElement.updateChildPosition`) and stacks at `z-index: 10` so it draws over the Element Call iframe (which `PersistedElement` mounts at body level with `z-index: 9`). Subscribes to `CallEvent.AudioMuteState` via `useTypedEventEmitterState` and renders Mic + Volume solid icons that turn red when the corresponding stream is muted. |
+| `apps/web/res/css/views/voip/_CallMicIndicator.pcss`                            | Styles for the `CallMicIndicator` pills (`position: fixed`, `z-index: 10`, 24×24 circle, `$alert` muted variant, `pointer-events: none`).                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `apps/desktop/src/globalShortcuts.ts`                                           | Main-process registrar. Tracks its own registered set, unregisters before each new payload, silently skips combos already taken by the OS. Exposes `releaseGlobalShortcuts()` for `beforeQuit`.                                                                                                                                                                                                                                                                                                                                                                |
+| `apps/desktop/src/windowAudio.ts`                                               | Per-application screenshare audio (Windows). `resolveAudioForSource(sourceId, shareAudio)` maps screen sources to system `"loopback"` and window sources to `{ id: "applicationLoopback:<pid>", name: "Application Audio" }` via Electron's raw-`{ id, name }` escape hatch; HWND→PID via one-shot PowerShell P/Invoke of `GetWindowThreadProcessId`.                                                                                                                                                                                                          |
+| `apps/web/res/css/views/settings/tabs/user/_KeyboardUserSettingsTab.pcss`       | Layout for the recorder, the global toggle, conflict warning, and the Reset-all row. (Was a stub upstream; rewritten here.)                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `apps/web/test/unit-tests/accessibility/KeyboardShortcutsCustomization-test.ts` | Unit tests for the pure helpers.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 ---
 
@@ -266,9 +292,13 @@ legacy 1:1 or an Element Call group session.
   (`updateMicSource`), split handlers (`onFeedMuteStateChanged` vs
   `onMicMuteStateChanged`), and the `data-speaking` overlay attribute.
 - `apps/web/src/components/views/elements/DesktopCapturerSourcePicker.tsx`
-  — exports `DesktopCapturerSourcePickerResult`; accepts `offerAudio` prop
-  and renders the audio checkbox + window-tab byline; `onFinished` now
-  returns `{ source, shareAudio }`.
+  — exports `DesktopCapturerSourcePickerResult`; accepts `offerAudio` and
+  `allowWindowAudio` props and renders the audio checkbox (window-tab byline
+  and forced-off shareAudio only when `allowWindowAudio` is false);
+  `onFinished` now returns `{ source, shareAudio }`. Also now fetches only
+  the **active tab's** source type (was both) on a 1000ms (was 500ms)
+  refresh, so it doesn't capture screens while you're on the window tab —
+  capturing both every 500ms pegged the main process into a visible hang.
 - `apps/web/src/vector/init.tsx` — calls `startGlobalShortcutsBridge()` and
   `startElementCallShortcuts()` from `preparePlatform`.
 - `apps/web/src/stores/widgets/ElementWidgetActions.ts` — adds a fork-defined
@@ -287,8 +317,9 @@ legacy 1:1 or an Element Call group session.
   only when the call is an `ElementCall`). The indicator itself portals to
   `document.body`; the ref is what it tracks for positioning.
 - `apps/web/src/vector/platform/ElectronPlatform.tsx` — receives the
-  `audioRequested` payload on `openDesktopCapturerSourcePicker`, opens the
-  picker with `offerAudio`, and passes `shareAudio` through to the
+  `audioRequested` / `windowAudioSupported` payload on
+  `openDesktopCapturerSourcePicker`, opens the picker with `offerAudio` /
+  `allowWindowAudio`, and passes `shareAudio` through to the
   `callDisplayMediaCallback` IPC.
 - `apps/web/res/css/views/voip/_VideoFeed.pcss` — `data-speaking="true"`
   rule + `@keyframes mx_VideoFeed_mic_pulse` for the pulse animation.
@@ -311,11 +342,30 @@ legacy 1:1 or an Element Call group session.
   calls it from `beforeQuit`. The `setDisplayMediaRequestHandler` callback
   computes `audio: "loopback"` from `request.audioRequested` (skipped on
   Linux), forwards it to the wayland callback path, and includes
-  `audioRequested` in the renderer-picker IPC payload.
-- `apps/desktop/src/ipc.ts` — `callDisplayMediaCallback` now reads
-  `args[1]` and passes `audio: "loopback"` to the SDK callback when set.
+  `audioRequested` + `windowAudioSupported` (`process.platform === "win32"`)
+  in the renderer-picker IPC payload.
+- `apps/desktop/src/ipc.ts` — `callDisplayMediaCallback` now resolves the
+  audio half via `resolveAudioForSource(source.id, shareAudio)`: system
+  `"loopback"` for screen sources, per-application loopback for window
+  sources on Windows, nothing otherwise. Also adds
+  `getDesktopCapturerSourcesSafe`: on Windows it enumerates window sources
+  **without thumbnails** (screens keep theirs) to dodge a native WGC
+  window-thumbnail segfault under Electron 42 / Chromium 148, and surfaces
+  each window's **app icon** as the thumbnail so window tiles aren't blank.
+  Also centralises the `{ id, name, thumbnailURL }` serialisation. See
+  BUILDING.md troubleshooting and the CLAUDE.md gotcha.
+- `apps/desktop/src/windowAudio.ts` — **new file.** `resolveAudioForSource`
+  plus the PowerShell-P/Invoke HWND→PID lookup behind it; builds the
+  `applicationLoopback:<pid>` device-id object passed through Electron's
+  raw-`{ id, name }` escape hatch. Windows-only by construction.
 - `apps/desktop/src/preload.cts` — whitelists the new IPC channels
   `setGlobalShortcuts` and `globalShortcutFired`.
+- `apps/desktop/project.json` — `build:ts` outputs gain `lib/*.cjs` /
+  `lib/*.d.cts` so an nx **cache replay** keeps `lib/preload.cjs`.
+  Upstream's `lib/*.js` + `lib/*.d.ts` globs silently dropped the
+  preload on replay, shipping an installer that fell back to the web
+  platform (no `window.electron`). Upstream-able fix; see BUILDING.md
+  troubleshooting.
 
 ### Tests
 
@@ -324,8 +374,8 @@ legacy 1:1 or an Element Call group session.
 - `apps/web/test/unit-tests/accessibility/KeyboardShortcutsCustomization-test.ts`
   — new suite for the helpers.
 - `apps/web/test/unit-tests/components/views/elements/DesktopCapturerSourcePicker-test.tsx`
-  — covers `offerAudio`, the window-tab byline, and the
-  `{ source, shareAudio }` return shape.
+  — covers `offerAudio`, the window-tab byline, the `allowWindowAudio`
+  enable/return paths, and the `{ source, shareAudio }` return shape.
 - `apps/web/test/unit-tests/components/views/voip/VideoFeed-test.tsx`
   — covers the speaking-indicator branch.
 - `apps/web/test/unit-tests/components/views/voip/LegacyCallView-test.tsx`
@@ -355,25 +405,25 @@ legacy 1:1 or an Element Call group session.
 
 ### Settings (`Settings.tsx`, both `LEVELS_DEVICE_ONLY_SETTINGS`)
 
-| Setting | Type | Default |
-|---|---|---|
-| `Keyboard.userShortcuts` | `Record<KeyBindingAction, KeyCombo>` | `{}` |
-| `Keyboard.globalShortcuts` | `KeyBindingAction[]` | `[]` |
+| Setting                    | Type                                 | Default |
+| -------------------------- | ------------------------------------ | ------- |
+| `Keyboard.userShortcuts`   | `Record<KeyBindingAction, KeyCombo>` | `{}`    |
+| `Keyboard.globalShortcuts` | `KeyBindingAction[]`                 | `[]`    |
 
 ### Key bindings
 
-| Action | Default | Category | Globaliseable? |
-|---|---|---|---|
-| `KeyBinding.toggleIncomingAudioInCall` | `Ctrl/Cmd+Alt+D` | CALLS | yes |
+| Action                                 | Default          | Category | Globaliseable? |
+| -------------------------------------- | ---------------- | -------- | -------------- |
+| `KeyBinding.toggleIncomingAudioInCall` | `Ctrl/Cmd+Alt+D` | CALLS    | yes            |
 
 ### IPC channels (preload whitelist)
 
-| Channel | Direction | Payload |
-|---|---|---|
-| `setGlobalShortcuts` | renderer → main | `Array<{ action, accelerator }>` |
-| `globalShortcutFired` | main → renderer | `{ action }` |
-| `openDesktopCapturerSourcePicker` | main → renderer (existing) | now `{ audioRequested?: boolean }` |
-| `callDisplayMediaCallback` (existing) | renderer → main | now `(source, shareAudio: boolean)` |
+| Channel                               | Direction                  | Payload                                                            |
+| ------------------------------------- | -------------------------- | ------------------------------------------------------------------ |
+| `setGlobalShortcuts`                  | renderer → main            | `Array<{ action, accelerator }>`                                   |
+| `globalShortcutFired`                 | main → renderer            | `{ action }`                                                       |
+| `openDesktopCapturerSourcePicker`     | main → renderer (existing) | now `{ audioRequested?: boolean; windowAudioSupported?: boolean }` |
+| `callDisplayMediaCallback` (existing) | renderer → main            | now `(source, shareAudio: boolean)`                                |
 
 ### LegacyCallHandler
 
@@ -384,8 +434,8 @@ legacy 1:1 or an Element Call group session.
 ### ElementCall (group call model)
 
 - Events:
-  - `CallEvent.DeviceMuteState` — payload `{ micMuted, videoMuted, remoteAudioMuted }`.
-  - `CallEvent.SpeakingState` — payload `boolean`.
+    - `CallEvent.DeviceMuteState` — payload `{ micMuted, videoMuted, remoteAudioMuted }`.
+    - `CallEvent.SpeakingState` — payload `boolean`.
 - Getters: `micMuted`, `videoMuted`, `remoteAudioMuted`, `speaking`.
 - Methods: `setMicrophoneMuted(muted): Promise<boolean>`,
   `toggleMicrophoneMuted(): Promise<boolean>`,
@@ -437,6 +487,13 @@ legacy 1:1 or an Element Call group session.
 - **Linux screenshare audio is intentionally disabled.** Electron's
   loopback behaviour is undefined on X11/Wayland, so the main-process
   handler returns `audio: undefined` on `process.platform === "linux"`.
+- **Per-application (window-source) screenshare audio is Windows-only.**
+  macOS would need the bundle-id flavour of the device id
+  (`applicationLoopback:<bundle_id>[:<pid>]`, CoreAudio process taps,
+  macOS 14.4+) plus a window→bundle-id lookup; untestable here, so the
+  window-tab checkbox stays disabled on macOS. Also note the captured
+  audio covers the window's whole _process tree_, and UWP windows resolve
+  to `ApplicationFrameHost` rather than the real app.
 
 ---
 
@@ -447,6 +504,9 @@ Likely friction points when merging `upstream/develop`:
 - `package.json` (root) — the removed `devEngines.packageManager` block. A
   merge that re-adds or edits it re-introduces the two-document lockfile and
   breaks nx until the removal is re-applied and the lockfile regenerated.
+- `apps/desktop/project.json` — the `build:ts` outputs fix (`lib/*.cjs`).
+  If a merge reverts it, cache-replayed builds ship without
+  `lib/preload.cjs` and the installer regresses to the web platform.
 - `apps/web/src/settings/Settings.tsx` — interface entries are
   alphabetically grouped; new neighbours of `Keyboard.*` will conflict.
 - `apps/web/src/accessibility/KeyboardShortcuts.ts` — additions sit next

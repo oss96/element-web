@@ -178,17 +178,21 @@ export default class ElectronPlatform extends BasePlatform {
             });
         });
 
-        this.electron.on("openDesktopCapturerSourcePicker", async (_ev, payload?: { audioRequested?: boolean }) => {
-            const offerAudio = !!payload?.audioRequested;
-            const { finished } = Modal.createDialog(DesktopCapturerSourcePicker, { offerAudio });
-            const [result] = await finished;
-            // getDisplayMedia promise does not return if no dummy is passed here as source
-            await this.ipc.call(
-                "callDisplayMediaCallback",
-                result?.source ?? { id: "", name: "", thumbnailURL: "" },
-                !!result?.shareAudio,
-            );
-        });
+        this.electron.on(
+            "openDesktopCapturerSourcePicker",
+            async (_ev, payload?: { audioRequested?: boolean; windowAudioSupported?: boolean }) => {
+                const offerAudio = !!payload?.audioRequested;
+                const allowWindowAudio = !!payload?.windowAudioSupported;
+                const { finished } = Modal.createDialog(DesktopCapturerSourcePicker, { offerAudio, allowWindowAudio });
+                const [result] = await finished;
+                // getDisplayMedia promise does not return if no dummy is passed here as source
+                await this.ipc.call(
+                    "callDisplayMediaCallback",
+                    result?.source ?? { id: "", name: "", thumbnailURL: "" },
+                    !!result?.shareAudio,
+                );
+            },
+        );
 
         this.electron.on("showToast", async (ev, { title, description, priority = 40 }) => {
             await this.clientStartedPromiseWithResolvers.promise;

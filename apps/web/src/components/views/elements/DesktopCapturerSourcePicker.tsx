@@ -23,13 +23,15 @@ export interface DesktopCapturerSourcePickerResult {
     shareAudio: boolean;
 }
 
-export function getDesktopCapturerSources(): Promise<Array<DesktopCapturerSource>> {
+export function getDesktopCapturerSources(
+    types: string[] = ["screen", "window"],
+): Promise<Array<DesktopCapturerSource>> {
     const options: GetSourcesOptions = {
         thumbnailSize: {
             height: 176,
             width: 312,
         },
-        types: ["screen", "window"],
+        types,
     };
     const plaf = PlatformPeg.get();
     return plaf ? plaf?.getDesktopCapturerSources(options) : Promise.resolve<DesktopCapturerSource[]>([]);
@@ -83,6 +85,13 @@ export interface PickerIProps {
      * returned via {@link DesktopCapturerSourcePickerResult.shareAudio}.
      */
     offerAudio?: boolean;
+    /**
+     * Whether the platform can attach audio to a *window* source (per-application
+     * loopback — currently desktop on Windows only). When false, the audio
+     * checkbox is disabled on the window tab and shareAudio is forced off for
+     * window sources, since a window-source audio track would just be silent.
+     */
+    allowWindowAudio?: boolean;
     onFinished(result?: DesktopCapturerSourcePickerResult): void;
 }
 
@@ -100,24 +109,31 @@ export default class DesktopCapturerSourcePicker extends React.Component<PickerI
     }
 
     public async componentDidMount(): Promise<void> {
-        // window.setInterval() first waits and then executes, therefore
-        // we call getDesktopCapturerSources() here without any delay.
-        // Otherwise the dialog would be left empty for some time.
-        this.setState({
-            sources: await getDesktopCapturerSources(),
-        });
+        // Fetch immediately so the dialog isn't empty while the interval waits.
+        await this.refreshSources();
 
-        // We update the sources every 500ms to get newer thumbnails
-        this.interval = window.setInterval(async (): Promise<void> => {
-            this.setState({
-                sources: await getDesktopCapturerSources(),
-            });
-        }, 500);
+        // Refresh periodically to pick up newer thumbnails. We only ever
+        // capture the *visible* tab's sources (see refreshSources), and a
+        // single screen capture can take ~0.5s on machines where DXGI
+        // duplication falls back, so 500ms left no idle time and pegged the
+        // main process — 1000ms keeps previews live without the hang.
+        this.interval = window.setInterval(() => {
+            void this.refreshSources();
+        }, 1000);
     }
 
     public componentWillUnmount(): void {
         clearInterval(this.interval);
     }
+
+    // Capture only the currently-selected tab's source type. Capturing the
+    // other tab's sources too (screens are expensive; window thumbnails crash
+    // on Windows — see ipc.ts) just burns the main process for content the
+    // user isn't looking at.
+    private refreshSources = async (): Promise<void> => {
+        const sources = await getDesktopCapturerSources([this.state.selectedTab]);
+        this.setState({ sources });
+    };
 
     private onSelect = (source: DesktopCapturerSource): void => {
         this.setState({ selectedSource: source });
@@ -125,15 +141,22 @@ export default class DesktopCapturerSourcePicker extends React.Component<PickerI
 
     private onShare = (): void => {
         if (!this.state.selectedSource) return;
-        // Audio loopback only works for entire screens on Windows/Chromium; an
-        // audio track for a window source would just be silent. Force it off
-        // for window sources so we don't return a misleading "shareAudio: true".
-        const shareAudio = this.state.selectedTab === Tabs.Screens && this.state.shareAudio;
+        // System-audio loopback only works for entire screens; window sources
+        // need per-application loopback, which the platform advertises via
+        // allowWindowAudio (Windows desktop only). Where unsupported, force
+        // audio off for window sources so we don't return a misleading
+        // "shareAudio: true" for what would be a silent track.
+        const audioSupportedOnTab = this.state.selectedTab === Tabs.Screens || !!this.props.allowWindowAudio;
+        const shareAudio = audioSupportedOnTab && this.state.shareAudio;
         this.props.onFinished({ source: this.state.selectedSource, shareAudio });
     };
 
     private onTabChange = (tab: Tabs): void => {
-        this.setState({ selectedSource: undefined, selectedTab: tab });
+        // Clear the old tab's sources and capture the new tab's straight away
+        // so switching feels immediate rather than waiting for the interval.
+        this.setState({ selectedSource: undefined, selectedTab: tab, sources: [] }, () => {
+            void this.refreshSources();
+        });
     };
 
     private onAudioChange = (checked: boolean): void => {
@@ -167,7 +190,7 @@ export default class DesktopCapturerSourcePicker extends React.Component<PickerI
             this.getTab(Tabs.Windows, _td("voip|screenshare_window")),
         ];
 
-        const audioOnlyOnScreenTab = this.state.selectedTab !== Tabs.Screens;
+        const audioOnlyOnScreenTab = this.state.selectedTab !== Tabs.Screens && !this.props.allowWindowAudio;
 
         return (
             <BaseDialog
@@ -185,9 +208,7 @@ export default class DesktopCapturerSourcePicker extends React.Component<PickerI
                     <LabelledCheckbox
                         className="mx_desktopCapturerSourcePicker_audio"
                         label={_t("voip|screenshare_audio_label")}
-                        byline={
-                            audioOnlyOnScreenTab ? _t("voip|screenshare_audio_byline_window") : undefined
-                        }
+                        byline={audioOnlyOnScreenTab ? _t("voip|screenshare_audio_byline_window") : undefined}
                         value={this.state.shareAudio && !audioOnlyOnScreenTab}
                         disabled={audioOnlyOnScreenTab}
                         onChange={this.onAudioChange}

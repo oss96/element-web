@@ -9,10 +9,11 @@ Electron's `globalShortcut` API, synthetic-event dispatcher fanning OS-level
 firings back into in-app handlers) and **call shortcuts + feedback** that
 work across both legacy 1:1 calls and Element Call (group). The latter
 includes the `ToggleIncomingAudioInCall` shortcut, mic/incoming-audio
-confirmation tones, a speaking-indicator pulse, system-audio sharing in the
-screenshare picker, a primary-tile mic indicator following the local feed
-in 1:1, and (newly) widget-API mic toggle + host-side mic indicator for
-group calls.
+confirmation tones, a speaking-indicator pulse, audio sharing in the
+screenshare picker (system loopback for screens, per-application loopback
+for windows on Windows), a primary-tile mic indicator following the local
+feed in 1:1, and (newly) widget-API mic toggle + host-side mic indicator
+for group calls.
 
 ## Keeping these docs current
 
@@ -34,6 +35,7 @@ isn't reflected here is invisible to the next session.
 ## What this fork adds
 
 **New files**
+
 - `apps/web/src/accessibility/KeyboardShortcutsCustomization.ts`
   Store + capture helpers. `getUserShortcutOverrides`,
   `set/clearUserShortcutOverride`, `get/setShortcutGlobal`,
@@ -51,6 +53,17 @@ isn't reflected here is invisible to the next session.
 - `apps/desktop/src/globalShortcuts.ts`
   Main-process half. Tracks its own registered set, unregisters before
   each new payload, silently skips combos already taken by the OS.
+- `apps/desktop/src/windowAudio.ts`
+  Per-application screenshare audio (Windows only).
+  `resolveAudioForSource` maps screen sources to system `"loopback"` and
+  window sources to an `applicationLoopback:<pid>` device-id object —
+  Chromium ≥141's process-loopback input device, passed through
+  Electron's undocumented raw-`{ id, name }` escape hatch in
+  `setDisplayMediaRequestHandler` result parsing. HWND→PID resolution
+  shells out to PowerShell with an inline P/Invoke of
+  `GetWindowThreadProcessId` (no native module; ~1s once per
+  share-start). PID-lookup failure degrades to video-only, never to
+  system-wide audio.
 - `apps/web/src/voip/ElementCallShortcuts.ts`
   Document-level keydown bridge for the active Element Call (group) call.
   Started from `init.tsx::preparePlatform` alongside the global bridge.
@@ -77,6 +90,7 @@ isn't reflected here is invisible to the next session.
   Unit tests for the pure helpers (currently 23 cases).
 
 **Modified vs upstream**
+
 - `apps/web/src/KeyBindingsManager.ts` — `KeyCombo` has an optional
   `numpad` flag; `isKeyComboMatch` accepts either `ev.key` or the
   un-shifted derivation from `ev.code` via `unshiftedFromCode`. A
@@ -95,7 +109,18 @@ isn't reflected here is invisible to the next session.
 - `apps/desktop/src/preload.cts` — whitelists `setGlobalShortcuts` and
   `globalShortcutFired`.
 - `apps/desktop/src/electron-main.ts` — imports the new module,
-  invokes `releaseGlobalShortcuts()` from `beforeQuit`.
+  invokes `releaseGlobalShortcuts()` from `beforeQuit`; the
+  display-media handler also sends `windowAudioSupported`
+  (`process.platform === "win32"`) in the picker-open payload.
+- `apps/desktop/src/ipc.ts` — `callDisplayMediaCallback` resolves its
+  audio half through `windowAudio.ts::resolveAudioForSource` (system
+  loopback for screens, per-application loopback for windows on
+  Windows, none otherwise).
+- `apps/web/src/components/views/elements/DesktopCapturerSourcePicker.tsx`
+  and `apps/web/src/vector/platform/ElectronPlatform.tsx` — thread the
+  `allowWindowAudio` flag through so the "Also share audio" checkbox is
+  live on the window tab on Windows desktop builds (disabled-with-byline
+  elsewhere).
 - `apps/web/src/accessibility/KeyboardShortcuts.ts` — adds
   `KeyBindingAction.ToggleIncomingAudioInCall` (default
   `Ctrl/Cmd+Alt+D`, CALLS category, eligible for "Make global").
@@ -123,7 +148,7 @@ isn't reflected here is invisible to the next session.
   today, so no-op against vanilla EC.
 - `apps/web/src/models/Call.ts` — adds `CallEvent.DeviceMuteState` (+
   exported `DeviceMuteState` payload `{ micMuted, videoMuted,
-  remoteAudioMuted }`) and `CallEvent.SpeakingState` (`boolean`). On
+remoteAudioMuted }`) and `CallEvent.SpeakingState` (`boolean`). On
   `ElementCall`: `_micMuted` / `_videoMuted` / `_remoteAudioMuted` /
   `_speaking` state with getters; `setMicrophoneMuted` /
   `toggleMicrophoneMuted` and `setVideoMuted` / `toggleVideoMuted`
@@ -186,6 +211,19 @@ See `BUILDING.md` at the repo root.
   `ToggleMicInCall` to `Ctrl+1` means `SwitchToSpaceByNumber` (NAVIGATION)
   also fires on the same press. The conflict-warning matcher only looks
   within a single category.
+- **Per-application (window-source) screenshare audio is Windows-only.**
+  macOS would need the bundle-id flavour of the device id plus a
+  window→bundle-id lookup (CoreAudio process taps, macOS 14.4+) and is
+  untestable here; Linux loopback is undefined in Electron. The window-tab
+  audio checkbox therefore stays disabled off-Windows. Captured audio
+  covers the window's whole _process tree_ (one Firefox window ⇒ all
+  Firefox audio), and UWP windows resolve to `ApplicationFrameHost`, so
+  UWP app audio is likely missed.
+- **Window sources show an app icon, not a live preview (Windows).**
+  Because window thumbnails crash (see the WGC gotcha), the window tab
+  shows each window's 48×48 app icon instead of a live thumbnail. A few
+  system windows have no icon and render blank. Screen sources keep live
+  thumbnails. Non-Windows platforms keep live window thumbnails.
 
 ## Repo gotchas (these have bitten this project before)
 
@@ -198,7 +236,7 @@ See `BUILDING.md` at the repo root.
 - **`_t()` extraction is literal-only.** `_t(cond ? "x" : "y")` makes
   matrix-i18n-lint drop BOTH strings. Always two separate calls:
   `cond ? _t("x") : _t("y")`.
-- **`pnpm i18n` writes placeholder values for *new* keys.** After it
+- **`pnpm i18n` writes placeholder values for _new_ keys.** After it
   adds a key to `en_EN.json`, the value is the key string itself
   (e.g. `"global_off": "settings|keyboard|global_off"`). Manually replace
   with real English text before rebuilding.
@@ -223,7 +261,7 @@ See `BUILDING.md` at the repo root.
   packager directly and won't auto-compile `apps/desktop/src/*.ts` into
   `apps/desktop/lib/`. If you wipe `lib/` (or it's never been built),
   electron-builder fails with `Application entry file "lib\electron-main.js"
-  in the ... app.asar is corrupted`. Fix: run
+in the ... app.asar is corrupted`. Fix: run
   `pnpm exec nx build:ts element-desktop && pnpm exec nx build:res element-desktop`
   first, or invoke `nx build element-desktop` instead (but that swallows
   the `--win squirrel` flag — pass it via `pnpm --filter element-desktop build -- --win squirrel`).
@@ -237,14 +275,14 @@ See `BUILDING.md` at the repo root.
   a single document, so every nx-driven script (`nx build`,
   `pnpm -r lint:types`, `nx start`, the full `pnpm build`) dies at graph
   construction with `Failed to process project graph … expected a single
-  document in the stream, but found more`. **Fix applied in this fork:** the
+document in the stream, but found more`. **Fix applied in this fork:** the
   `devEngines.packageManager` block is removed from the root `package.json`,
   which makes pnpm write a single-document lockfile. The real dependency
   document is byte-identical to upstream's — only the self-management document
   is dropped. `managePackageManagerVersions: false` alone does **not** help
   (the document is gated by `devEngines`, not that setting). Because pnpm no
   longer enforces its own version, install via `corepack pnpm@11.2.2 install
-  --config.confirmModulesPurge=false`. **Re-apply this removal after any
+--config.confirmModulesPurge=false`. **Re-apply this removal after any
   upstream merge that restores the block**, then regenerate the lockfile
   (`sed -i '1,199d' pnpm-lock.yaml` to drop the stale first doc, then
   `corepack pnpm@11.2.2 install`).
@@ -260,7 +298,7 @@ See `BUILDING.md` at the repo root.
   webpack starts before the first vite pass finishes, the resolve cache
   poisons against `dist/element-web-shared-components.css` (or .d.ts)
   and never retries — the dev server hangs forever on `wait until
-  bundle finished: /`. Workaround: pre-build the shared-components dist
+bundle finished: /`. Workaround: pre-build the shared-components dist
   (`pnpm -C packages/shared-components exec vite build`) and run
   `pnpm -C apps/web exec webpack-dev-server …` directly to bypass nx's
   `^start`. Same root cause as the `.d.ts` gotcha above; different
@@ -269,7 +307,7 @@ See `BUILDING.md` at the repo root.
   top-level import that transitively pulls in stores (e.g. `Call.ts`
   → `WidgetMessagingStore` / `WidgetLayoutStore`) shifts module
   evaluation order so eagerly-singletoned stores try to access
-  `MatrixClientPeg` before *its* module finishes evaluating, producing
+  `MatrixClientPeg` before _its_ module finishes evaluating, producing
   `ReferenceError: Cannot access 'MatrixClientPeg' before initialization`
   at app load. **Lazy-import heavy modules inside the function body,
   not at the top of the file.** See `apps/web/src/voip/ElementCallShortcuts.ts`
@@ -281,8 +319,8 @@ See `BUILDING.md` at the repo root.
   rect. Any host-side overlay that needs to stack above the iframe
   must portal to body and track the same way — bumping `mx_CallView`'s
   z-index above 9 hides the iframe behind `mx_CallView`'s own
-  background. See `CallMicIndicator.tsx` for the portal + ResizeObserver
-  + `timeline_resize` dispatcher pattern.
+  background. See `CallMicIndicator.tsx` for the portal/ResizeObserver/
+  `timeline_resize`-dispatcher pattern.
 - **`widgetApi.transport.send(...)` returns `undefined` in jest mocks.**
   The default `jest.fn()` setup in `Call-test.ts` doesn't return a
   Promise, so chaining `.then()` / `.catch()` directly on a send crashes
@@ -294,6 +332,56 @@ See `BUILDING.md` at the repo root.
   bypass it; if you reintroduce an `AccessibleButton` wrapper around any
   capture surface, expect Enter and Space presses to be hijacked and
   modifier keys to be lost mid-chord.
+- **Window-thumbnail capture segfaults on Windows (Electron 42 /
+  Chromium 148 + recent GPU drivers).** `desktopCapturer.getSources` with
+  a non-zero `thumbnailSize` for `window` sources crashes the GPU/capture
+  path: GDI is the primary window capturer, but Chromium hardcodes
+  `allow_wgc_capturer_fallback(true)`, and the WGC fallback's
+  `CreateForWindow` failure path segfaults. No feature flag disables the
+  fallback; a native crash can't be caught in JS. The screenshare picker
+  polls `getSources` for thumbnails, so it trips this on open. **Fix:**
+  `ipc.ts::getDesktopCapturerSourcesSafe` enumerates window sources without
+  thumbnails on win32 and surfaces each window's app icon as the thumbnail
+  instead (screens keep real thumbnails). Screen thumbnails and name-only
+  window enumeration are both stable; only window _thumbnails_ crash.
+  Relatedly, the picker (`DesktopCapturerSourcePicker.tsx`) now fetches only
+  the **active tab's** source type and at a 1000ms (was 500ms) interval — a
+  screen capture is ~0.5s where DXGI duplication falls back, and capturing
+  both types every 500ms pegged the main process into a visible hang. See
+  BUILDING.md troubleshooting.
+- **Declining "Also share audio" must OMIT the audio key, not pass
+  `audio: undefined`.** The fork's screenshare always _requests_ audio
+  (`getDisplayMedia({ audio: true })`) so the picker can offer the checkbox.
+  Electron's display-media handler does `if (audio_requested &&
+result_dict.Has("audio"))` — and `{ video, audio: undefined }` still makes
+  `Has("audio")` true, so it tries to parse `undefined` as a device, fails,
+  and rejects the **whole** capture with "Invalid capture constraints"
+  (the share silently doesn't start). `ipc.ts::callDisplayMediaCallback`
+  therefore builds `{ video }` and only sets `.audio` when there's a real
+  device. Symptom if regressed: sharing works _with_ audio ticked but a
+  no-audio share "opens the picker, then nothing happens".
+- **nx cache replay of `build:ts` used to drop `lib/preload.cjs`.**
+  Upstream's `apps/desktop/project.json` declared `build:ts` outputs as
+  `lib/*.js` + `lib/*.d.ts`, which misses the `.cts → .cjs` preload emit.
+  A cache-replayed `build:ts` therefore restored everything _except_
+  `preload.cjs`; the packed app then silently fell back to the **web**
+  platform (no `window.electron` → no calls, no screenshare picker, a
+  "Failed to load service worker" toast). Fixed in this fork by adding
+  `lib/*.cjs` / `lib/*.d.cts` to the outputs. If an upstream merge
+  reverts `project.json`, re-apply — and always sanity-check
+  `asar list ... | grep preload` before shipping an installer. See
+  BUILDING.md troubleshooting.
+- **Per-application screenshare audio rides an undocumented Electron
+  escape hatch.** `windowAudio.ts` passes a raw
+  `applicationLoopback:<pid>` device-id object as the display-media
+  callback's audio; Electron's published `Streams["audio"]` type only allows
+  `'loopback' | 'loopbackWithMute' | WebFrameMain`, but the C++ result
+  parser (`shell/browser/electron_browser_context.cc`) deliberately
+  accepts any raw `{ id, name }` ("escape hatch" comment, verified in
+  the 42-x-y branch). **Re-verify the hatch still exists after every
+  Electron major bump** — grep that file for `escape hatch` — and note
+  the `as unknown as Streams["audio"]` cast will keep compiling even if
+  the runtime support disappears.
 
 ## Upstream sync
 
@@ -312,12 +400,17 @@ so a merge takes upstream's `package.json` / `pnpm-lock.yaml` wholesale. After
 merging: re-strip the `devEngines.packageManager` block from the root
 `package.json` and regenerate a single-document lockfile (see the pnpm-11/nx
 gotcha), then `corepack pnpm@11.2.2 install --config.confirmModulesPurge=false`.
-Last full sync: **2026-05-31**, merging up to upstream `32b66747f4`. That tip
-pins `matrix-js-sdk#develop` (commit `68e5cdea`) whose TS-6.0 `.ts`-extension
-source breaks `lint:types` (4 errors) and jest (setup crash) but **not** the
-webpack build — an upstream develop-on-develop pairing issue, not a fork bug.
+Last full sync: **2026-06-04**, merging up to upstream `afc4e52df4` (53
+commits; no conflicts, `devEngines` removal and single-document lockfile
+survived the auto-merge — no re-strip needed; nx bumped to 22.7.5, Electron to
+42.3.0/Chromium 148). Upstream still pins a `matrix-js-sdk#develop` snapshot
+whose TS-6.0 `.ts`-extension source breaks `lint:types` (4 errors, all inside
+the SDK) and jest (setup crash in `setupTests.ts`) but **not** the webpack
+build — an upstream develop-on-develop pairing issue, not a fork bug. The
+moduleNameMapper change upstream (#33734) did **not** fix the jest crash.
 
 Likely conflict sites if upstream churns:
+
 - `package.json` (root) — the removed `devEngines.packageManager` block; a merge that re-adds or edits it will re-introduce the two-document lockfile and break nx until the removal is re-applied.
 - `apps/web/src/settings/Settings.tsx` — interface entries are alphabetically grouped; new neighbours will conflict.
 - `apps/web/src/i18n/strings/en_EN.json` — adjacent keyboard and voip keys.
@@ -342,7 +435,7 @@ toggle is hidden in the snapshot.
 > imports `matrix-js-sdk/src/...`, and the `matrix-js-sdk#develop` snapshot
 > upstream pins uses TS-6.0 `.ts`-extension imports jest's transform config
 > doesn't handle, so every suite fails at setup (`SyntaxError: Cannot use
-> import statement outside a module`). Upstream develop-on-develop pairing
+import statement outside a module`). Upstream develop-on-develop pairing
 > issue, not a fork regression; clears when upstream realigns its SDK pin or
 > jest transform. The fork's own test code is unchanged and still type-checks.
 
@@ -364,4 +457,4 @@ internally) must also pass after any new `_t()` / `_td()` strings.
 > inside the pinned `matrix-js-sdk#develop` source** (`MSC4108SignInWithQR.ts`,
 > `rust-crypto.ts`) — none in fork or app code. Same upstream SDK-pairing root
 > cause as the jest note above; the webpack build (`pnpm --filter element-web
-> build`) stays green because it transpiles rather than type-checks.
+build`) stays green because it transpiles rather than type-checks.

@@ -546,6 +546,9 @@ app.on("ready", async () => {
             } else {
                 global.mainWindow?.webContents.send("openDesktopCapturerSourcePicker", {
                     audioRequested: request.audioRequested,
+                    // Per-application loopback (window-source audio) needs the
+                    // Windows process-loopback API — see windowAudio.ts.
+                    windowAudioSupported: process.platform === "win32",
                 });
             }
             setDisplayMediaCallback(callback);

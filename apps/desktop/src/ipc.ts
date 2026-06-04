@@ -10,7 +10,59 @@ import { app, autoUpdater, desktopCapturer, ipcMain, powerSaveBlocker, TouchBar,
 import IpcMainEvent = Electron.IpcMainEvent;
 import { randomArray } from "./utils.js";
 import { getDisplayMediaCallback, setDisplayMediaCallback } from "./displayMediaCallback.js";
+import { resolveAudioForSource } from "./windowAudio.js";
 import Store, { clearDataAndRelaunch } from "./store.js";
+
+type SourcesOptions = Electron.SourcesOptions;
+
+interface CapturerSource {
+    id: string;
+    name: string;
+    thumbnailURL: string;
+}
+
+/** Serialise a source to the `{ id, name, thumbnailURL }` shape the renderer expects. */
+const toCapturerSource = (source: Electron.DesktopCapturerSource, preferIcon: boolean): CapturerSource => {
+    // Window sources on Windows come back without a thumbnail (see below), so
+    // fall back to the app icon there — a recognisable visual beats a blank
+    // tile. The picker's <img> renders it at native size (48×48).
+    const image = preferIcon && source.appIcon && !source.appIcon.isEmpty() ? source.appIcon : source.thumbnail;
+    return { id: source.id, name: source.name, thumbnailURL: image.toDataURL() };
+};
+
+/**
+ * Fetch desktop-capturer sources, working around a hard crash.
+ *
+ * On Windows (observed under Electron 42 / Chromium 148 with recent GPU
+ * drivers) generating *window* thumbnails segfaults the capture/GPU path:
+ * the primary GDI window capturer rejects some windows and Chromium falls
+ * back to the WGC capturer (`allow_wgc_capturer_fallback(true)` is hardcoded
+ * in content/public/browser/desktop_capture.cc), whose `CreateForWindow`
+ * failure path crashes the process. A native segfault can't be caught in JS,
+ * so we avoid triggering it: enumerate window sources *without* thumbnails
+ * (a name-only enumeration never invokes WGC) and surface each window's app
+ * icon instead. Screens keep their thumbnails. Non-Windows platforms are
+ * unaffected and take the normal path (real thumbnails for both types).
+ */
+async function getDesktopCapturerSourcesSafe(options: SourcesOptions): Promise<CapturerSource[]> {
+    const wantsWindows = options.types?.includes("window");
+    if (process.platform !== "win32" || !wantsWindows) {
+        return (await desktopCapturer.getSources(options)).map((s) => toCapturerSource(s, false));
+    }
+
+    const sources: CapturerSource[] = [];
+    if (options.types?.includes("screen")) {
+        const screens = await desktopCapturer.getSources({ types: ["screen"], thumbnailSize: options.thumbnailSize });
+        sources.push(...screens.map((s) => toCapturerSource(s, false)));
+    }
+    const windows = await desktopCapturer.getSources({
+        types: ["window"],
+        thumbnailSize: { width: 0, height: 0 }, // no thumbnail → no WGC → no crash
+        fetchWindowIcons: true, // show the app icon in place of the missing thumbnail
+    });
+    sources.push(...windows.map((s) => toCapturerSource(s, true)));
+    return sources;
+}
 
 let focusHandlerAttached = false;
 ipcMain.on("loudNotification", function (): void {
@@ -136,20 +188,27 @@ ipcMain.on("ipcCall", async function (_ev: IpcMainEvent, payload) {
             }
             break;
         case "getDesktopCapturerSources":
-            ret = (await desktopCapturer.getSources(args[0])).map((source) => ({
-                id: source.id,
-                name: source.name,
-                thumbnailURL: source.thumbnail.toDataURL(),
-            }));
+            ret = await getDesktopCapturerSourcesSafe(args[0]);
             break;
-        case "callDisplayMediaCallback":
-            await getDisplayMediaCallback()?.({
-                video: args[0],
-                audio: args[1] ? "loopback" : undefined,
-            });
+        case "callDisplayMediaCallback": {
+            // System loopback for screens, per-application loopback for windows
+            // (Windows only) — see windowAudio.ts.
+            const audio = await resolveAudioForSource(args[0]?.id ?? "", Boolean(args[1]));
+            const streams: Electron.Streams = { video: args[0] };
+            // Only attach the `audio` key when we actually have a device.
+            // getDisplayMedia here is called with audio requested (so the
+            // picker can offer the "Also share audio" checkbox), and Electron's
+            // handler treats a *present* `audio` key — even `audio: undefined` —
+            // as "audio supplied"; failing to parse it then rejects the whole
+            // request with "Invalid capture constraints" (see the
+            // `result_dict.Has("audio")` branch in electron_browser_context.cc).
+            // Omitting the key entirely yields a clean video-only stream.
+            if (audio) streams.audio = audio;
+            await getDisplayMediaCallback()?.(streams);
             setDisplayMediaCallback(null);
             ret = null;
             break;
+        }
 
         case "clearStorage":
             await clearDataAndRelaunch(global.mainWindow.webContents.session);
