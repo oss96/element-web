@@ -24,7 +24,7 @@
             "cache": true,
             "command": "tsc",
             "inputs": ["src", "{projectRoot}/tsconfig.json"],
-            "outputs": ["{projectRoot}/lib/*.js", "{projectRoot}/lib/*.d.ts"],
+            "outputs": ["{projectRoot}/lib/*.js", "{projectRoot}/lib/*.d.ts", "{projectRoot}/lib/*.cjs", "{projectRoot}/lib/*.d.cts"],
             "options": { "cwd": "apps/desktop" }
         },
         "build:res": {

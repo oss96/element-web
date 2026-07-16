@@ -113,6 +113,10 @@ export const KeyboardShortcutEditor: React.FC<IProps> = ({
             <span className="mx_KeyboardShortcut_shortcutLabel">{displayName}</span>
             <div className="mx_KeyboardShortcut_shortcutControls">
                 {recording ? (
+                    // Keyboard input during recording is captured at the document level (see the
+                    // effect below); a local key handler here would swallow the very combo being
+                    // recorded, so the click-to-cancel affordance is intentionally pointer-only.
+                    // oxlint-disable-next-line jsx-a11y/click-events-have-key-events
                     <div
                         className="mx_KeyboardShortcut_recording"
                         role="status"

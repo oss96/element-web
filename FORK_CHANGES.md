@@ -219,7 +219,7 @@ legacy 1:1 or an Element Call group session.
 | `apps/web/res/css/views/voip/_CallMicIndicator.pcss` | Styles for the `CallMicIndicator` pills (`position: fixed`, `z-index: 10`, 24×24 circle, `$alert` muted variant, `pointer-events: none`). |
 | `apps/desktop/src/globalShortcuts.ts` | Main-process registrar. Tracks its own registered set, unregisters before each new payload, silently skips combos already taken by the OS. Exposes `releaseGlobalShortcuts()` for `beforeQuit`. |
 | `apps/web/res/css/views/settings/tabs/user/_KeyboardUserSettingsTab.pcss` | Layout for the recorder, the global toggle, conflict warning, and the Reset-all row. (Was a stub upstream; rewritten here.) |
-| `apps/web/test/unit-tests/accessibility/KeyboardShortcutsCustomization-test.ts` | Unit tests for the pure helpers. |
+| `apps/web/src/accessibility/KeyboardShortcutsCustomization.test.ts` | Unit tests for the pure helpers. |
 
 ---
 
@@ -319,10 +319,17 @@ legacy 1:1 or an Element Call group session.
 
 ### Tests
 
-- `apps/web/test/unit-tests/KeyBindingsManager-test.ts` — exercises the
-  numpad / `unshiftedFromCode` match paths.
-- `apps/web/test/unit-tests/accessibility/KeyboardShortcutsCustomization-test.ts`
-  — new suite for the helpers.
+> **2026-07 vitest migration.** Upstream moved from jest to vitest; tests are
+> now collected only as `src/**/*.test.{ts,tsx}`. The fork's own suite was
+> migrated to that layout (see below). Other tests listed here that still sit
+> under `test/unit-tests/*-test.ts` are **unmodified upstream** files, dormant
+> under the new collection until upstream migrates them — they are not fork
+> tests. Only `KeyboardShortcutsCustomization.test.ts` is fork-authored.
+
+- `apps/web/src/accessibility/KeyboardShortcutsCustomization.test.ts`
+  — fork suite for the pure helpers (31 cases). Migrated from the old
+  `test/unit-tests/…-test.ts` jest path to co-located vitest during the
+  2026-07 sync (`import { describe, it, expect } from "vitest"`).
 - `apps/web/test/unit-tests/components/views/elements/DesktopCapturerSourcePicker-test.tsx`
   — covers `offerAudio`, the window-tab byline, and the
   `{ source, shareAudio }` return shape.
@@ -344,10 +351,18 @@ legacy 1:1 or an Element Call group session.
   (`expected a single document in the stream, but found more`), which breaks
   every nx-driven script (`nx build`, `pnpm -r lint:types`, `nx start`).
   Removing the block makes pnpm write a single-document lockfile. The real
-  dependency document is byte-identical to upstream; only the self-management
-  document is dropped. Install with `corepack pnpm@11.2.2 install`. This is a
+  document is dropped. Install with `corepack pnpm@11.5.2 install`. This is a
   build-tooling workaround, not a feature — re-apply after any upstream merge
   that restores the block (see CLAUDE.md, pnpm-11/nx gotcha).
+- `package.json` (root) — adds `"@typescript/old": "npm:typescript@6.0.3"` to
+  `devDependencies` (2026-07 TS-6 sync). Upstream's `module-api` vite build
+  `require.resolve("@typescript/old")`s an alias pnpm never hoists, so the
+  webpack build fails with `Cannot find module '@typescript/old'`; the root
+  alias links it where module-api can resolve it. Diverges the lockfile ~181
+  lines from upstream. Build-tooling workaround — re-apply after any upstream
+  merge (see CLAUDE.md, `@typescript/old` gotcha).
+- `apps/desktop/project.json` — adds `lib/*.cjs` / `lib/*.d.cts` to `build:ts`
+  outputs so cache replay keeps `preload.cjs`. Re-apply if upstream reverts it.
 
 ---
 
@@ -444,9 +459,10 @@ legacy 1:1 or an Element Call group session.
 
 Likely friction points when merging `upstream/develop`:
 
-- `package.json` (root) — the removed `devEngines.packageManager` block. A
-  merge that re-adds or edits it re-introduces the two-document lockfile and
-  breaks nx until the removal is re-applied and the lockfile regenerated.
+- `package.json` (root) — the removed `devEngines.packageManager` block and
+  the added `@typescript/old` alias. A merge that re-adds the block
+  re-introduces the two-document lockfile (breaks nx); dropping the alias breaks
+  the module-api/webpack build. Both re-applied after every merge.
 - `apps/web/src/settings/Settings.tsx` — interface entries are
   alphabetically grouped; new neighbours of `Keyboard.*` will conflict.
 - `apps/web/src/accessibility/KeyboardShortcuts.ts` — additions sit next

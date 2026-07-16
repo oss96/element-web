@@ -32,11 +32,11 @@ import { LockSolidIcon } from "@vector-im/compound-design-tokens/assets/web/icon
 
 import PosthogTrackers from "../../PosthogTrackers";
 import { DecryptionFailureTracker } from "../../DecryptionFailureTracker";
-import { type IMatrixClientCreds, MatrixClientPeg } from "../../MatrixClientPeg";
+import { type IMatrixClientCreds } from "../../utils/createMatrixClient";
+import { MatrixClientPeg } from "../../MatrixClientPeg";
 import PlatformPeg from "../../PlatformPeg";
 import SdkConfig, { type ConfigOptions } from "../../SdkConfig";
 import dis from "../../dispatcher/dispatcher";
-import Notifier from "../../Notifier";
 import Modal from "../../Modal";
 import { showRoomInviteDialog, showStartChatInviteDialog } from "../../RoomInvite";
 import * as Rooms from "../../Rooms";
@@ -75,8 +75,6 @@ import { UIFeature } from "../../settings/UIFeature";
 import DialPadModal from "../views/voip/DialPadModal";
 import { showToast as showMobileGuideToast } from "../../toasts/MobileGuideToast";
 import { shouldUseLoginForWelcome } from "../../utils/pages";
-import RoomListStore from "../../stores/room-list/RoomListStore";
-import { RoomUpdateCause } from "../../stores/room-list/models";
 import { ModuleRunner } from "../../modules/ModuleRunner";
 import Spinner from "../views/elements/Spinner";
 import QuestionDialog from "../views/dialogs/QuestionDialog";
@@ -95,9 +93,7 @@ import PerformanceMonitor, { PerformanceEntryNames } from "../../performance";
 import UIStore, { UI_EVENTS } from "../../stores/UIStore";
 import SoftLogout from "./auth/SoftLogout";
 import { copyPlaintext } from "../../utils/strings";
-import { PosthogAnalytics } from "../../PosthogAnalytics";
 import { initSentry } from "../../sentry";
-import LegacyCallHandler from "../../LegacyCallHandler";
 import { showSpaceInvite } from "../../utils/space";
 import { type ButtonEvent } from "../views/elements/AccessibleButton";
 import { type ActionPayload } from "../../dispatcher/payloads";
@@ -118,7 +114,8 @@ import RightPanelStore from "../../stores/right-panel/RightPanelStore";
 import { TimelineRenderingType } from "../../contexts/RoomContext";
 import { type ValidatedServerConfig } from "../../utils/ValidatedServerConfig";
 import { isLocalRoom } from "../../utils/localRoom/isLocalRoom";
-import { SDKContext, SdkContextClass } from "../../contexts/SDKContext";
+import { SDKContext } from "../../contexts/SDKContext";
+import { SDKContextClass } from "../../contexts/SDKContextClass.ts";
 import { viewUserDeviceSettings } from "../../actions/handlers/viewUserDeviceSettings";
 import GenericToast from "../views/toasts/GenericToast";
 import RovingSpotlightDialog from "../views/dialogs/spotlight/SpotlightDialog";
@@ -144,9 +141,6 @@ import { type IScreen } from "../../vector/routing.ts";
 import { type URLParams } from "../../vector/url_utils.ts";
 import { type QrLoginCredentials } from "../views/auth/LoginWithQR.tsx";
 import { configureFromCompletedOAuthLogin } from "../../Lifecycle";
-
-// legacy export
-export { default as Views } from "../../Views";
 
 const AUTH_SCREENS = ["register", "mobile_register", "login", "forgot_password", "start_sso", "start_cas", "welcome"];
 
@@ -193,8 +187,6 @@ interface IState {
     currentRoomId: string | null;
     // If we're trying to just view a user ID (i.e. /user URL), this is it
     currentUserId: string | null;
-    // this is persisted as mx_lhs_size, loaded in LoggedInView
-    collapseLhs: boolean;
     // Parameters used in the registration dance with the IS
     // eslint-disable-next-line camelcase
     register_client_secret?: string;
@@ -223,10 +215,6 @@ interface IState {
 export default class MatrixChat extends React.PureComponent<IProps, IState> {
     public static displayName = "MatrixChat";
 
-    public static defaultProps: Partial<IProps> = {
-        config: {},
-    };
-
     private firstSyncComplete = false;
     private firstSyncPromise: PromiseWithResolvers<void>;
 
@@ -247,19 +235,19 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
     private dispatcherRef?: string;
     private themeWatcher?: ThemeWatcher;
     private fontWatcher?: FontWatcher;
-    private readonly stores: SdkContextClass;
+    private readonly stores: SDKContextClass;
     private loadSessionAbortController = new AbortController();
 
     private sessionLoadStarted = false;
 
     public constructor(props: IProps) {
         super(props);
-        this.stores = SdkContextClass.instance;
+        this.stores = SDKContextClass.instance;
         this.stores.constructEagerStores();
+        window.mxSdkContext = this.stores;
 
         this.state = {
             view: Views.LOADING,
-            collapseLhs: false,
             currentRoomId: null,
             currentUserId: null,
 
@@ -352,11 +340,7 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
         );
 
         // remove the loginToken or auth code from the URL regardless
-        if (
-            !!this.props.urlParams.legacy_sso ||
-            !!this.props.urlParams.oidc_fragment ||
-            !!this.props.urlParams.oidc_query
-        ) {
+        if (!!this.props.urlParams.legacy_sso || !!this.props.urlParams.oauth2) {
             this.props.onTokenLoginCompleted(this.props.urlParams, this.getFragmentAfterLogin());
         }
 
@@ -404,7 +388,7 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
      * Called when:
      *
      *  - We successfully completed an OIDC or token login, via {@link initSession}.
-     *  - The {@link Login} or {@link Register} components notify us that we successfully completed a non-OIDC login or
+     *  - The {@link Login} or {@link Registration} components notify us that we successfully completed a non-OIDC login or
      *    registration.
      *
      * In both cases, {@link Action.OnLoggedIn} will already have been emitted, but the call to {@link onShowPostLoginScreen} will
@@ -659,11 +643,6 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
             return;
         }
 
-        // Exclude some rather spammy actions from being logged.
-        if (payload.action != Action.UserActivity) {
-            logger.debug(`MatrixChat: handling action ${payload.action}`);
-        }
-
         // Start the onboarding process for certain actions
         if (
             MatrixClientPeg.get()?.isGuest() &&
@@ -706,9 +685,9 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
                 }
                 break;
             case "logout":
-                LegacyCallHandler.instance.hangupAllCalls();
-                Promise.all([...[...CallStore.instance.connectedCalls].map((call) => call.disconnect())]).finally(() =>
-                    Lifecycle.logout(this.stores.oidcClientStore),
+                this.stores.legacyCallHandler.hangupAllCalls();
+                Promise.all([...CallStore.instance.connectedCalls].map((call) => call.disconnect())).finally(() =>
+                    Lifecycle.logout(),
                 );
                 break;
             case "require_registration":
@@ -739,10 +718,12 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
                 this.viewLogin();
                 break;
             case "start_password_recovery":
-                this.setStateForNewView({
-                    view: Views.FORGOT_PASSWORD,
-                });
-                this.notifyNewScreen("forgot_password");
+                if (SettingsStore.getValue(UIFeature.PasswordReset)) {
+                    this.setStateForNewView({
+                        view: Views.FORGOT_PASSWORD,
+                    });
+                    this.notifyNewScreen("forgot_password");
+                }
                 break;
             case "start_chat":
                 createRoom(MatrixClientPeg.safeGet(), {
@@ -877,24 +858,8 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
                 break;
             }
             case "hide_left_panel":
-                this.setState(
-                    {
-                        collapseLhs: true,
-                    },
-                    () => {
-                        this.stores.resizeNotifier.notifyLeftHandleResized();
-                    },
-                );
-                break;
             case "show_left_panel":
-                this.setState(
-                    {
-                        collapseLhs: false,
-                    },
-                    () => {
-                        this.stores.resizeNotifier.notifyLeftHandleResized();
-                    },
-                );
+                this.stores.resizeNotifier.notifyLeftHandleResized();
                 break;
             case Action.OpenDialPad:
                 Modal.createDialog(DialPadModal, {}, "mx_Dialog_dialPadWrapper");
@@ -1368,9 +1333,7 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
                 }
 
                 if (room) {
-                    // Legacy room list store needs to be told to manually remove this room
-                    RoomListStore.instance.manualRoomUpdate(room, RoomUpdateCause.RoomRemoved);
-                    // New room list store will remove the room on the following dispatch
+                    // The room list store will remove the room on the following dispatch
                     dis.dispatch<AfterForgetRoomPayload>({ action: Action.AfterForgetRoom, room });
                 }
             })
@@ -1547,7 +1510,6 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
      * Handle an {@link Action.OnLoggedIn} action (i.e, we now have a client with working credentials).
      */
     private onLoggedIn(): void {
-        this.stores.client = MatrixClientPeg.safeGet();
         StorageManager.tryPersistStorage();
 
         // If we're loading the app for the first time, we can now transition to a splash screen while we wait for the
@@ -1580,7 +1542,6 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
     private onLoggedOut(): void {
         this.viewWelcome({
             ready: false,
-            collapseLhs: false,
             currentRoomId: null,
         });
         this.subTitleStatus = "";
@@ -1596,7 +1557,6 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
         this.setStateForNewView({
             view: Views.SOFT_LOGOUT,
             ready: false,
-            collapseLhs: false,
             currentRoomId: null,
         });
         this.subTitleStatus = "";
@@ -1667,8 +1627,8 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
             this.firstSyncComplete = true;
             this.firstSyncPromise.resolve();
 
-            if (Notifier.shouldShowPrompt() && !MatrixClientPeg.userRegisteredWithinLastHours(24)) {
-                showNotificationsToast(false);
+            if (this.stores.notifier.shouldShowPrompt() && !MatrixClientPeg.userRegisteredWithinLastHours(24)) {
+                showNotificationsToast(this.stores.notifier, false);
             }
 
             dis.fire(Action.FocusSendMessageComposer);
@@ -1827,7 +1787,7 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
 
         // Cannot be done in OnLoggedIn as at that point the AccountSettingsHandler doesn't yet have a client
         // Will be moved to a pre-login flow as well
-        if (PosthogAnalytics.instance.isEnabled() && SettingsStore.isLevelSupported(SettingLevel.ACCOUNT)) {
+        if (this.stores.posthogAnalytics.isEnabled() && SettingsStore.isLevelSupported(SettingLevel.ACCOUNT)) {
             this.initPosthogAnalyticsToast();
         }
 
@@ -2028,6 +1988,9 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
             });
         } else if (ModuleApi.instance.navigation.locationRenderers.get(screen)) {
             this.setState({ page_type: screen });
+        } else {
+            // Unknown screen requested
+            return this.showScreen(isLoggedOutOrGuest ? "welcome" : "home");
         }
     }
 
@@ -2212,125 +2175,126 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
         return fragmentAfterLogin;
     }
 
-    public render(): React.ReactNode {
+    private getView(): JSX.Element {
         const fragmentAfterLogin = this.getFragmentAfterLogin();
-        let view: JSX.Element;
 
-        if (this.state.view === Views.LOADING) {
-            view = (
-                <div className="mx_MatrixChat_splash">
-                    <Spinner />
-                </div>
-            );
-        } else if (this.state.view === Views.CONFIRM_LOCK_THEFT) {
-            view = (
-                <ConfirmSessionLockTheftView
-                    onConfirm={() => {
-                        this.setState({ view: Views.LOADING });
-                        this.startInitSession();
-                    }}
-                />
-            );
-        } else if (this.state.view === Views.COMPLETE_SECURITY) {
-            view = <CompleteSecurity onFinished={this.onCompleteSecurityE2eSetupFinished} />;
-        } else if (this.state.view === Views.E2E_SETUP) {
-            view = <E2eSetup onCancelled={this.onCompleteSecurityE2eSetupFinished} />;
-        } else if (this.state.view === Views.PENDING_CLIENT_START) {
-            // we think we are logged in, but are still waiting for the /sync to complete
-            view = (
-                <LoginSplashView
-                    matrixClient={MatrixClientPeg.safeGet()}
-                    onLogoutClick={this.onLogoutClick}
-                    syncError={this.state.syncError}
-                />
-            );
-        } else if (this.state.view === Views.LOGGED_IN) {
-            // `ready` and `view==LOGGED_IN` may be set before `page_type` (because the
-            // latter is set via the dispatcher). If we don't yet have a `page_type`,
-            // keep showing the spinner for now.
-            if (this.state.ready && this.state.page_type) {
-                /* for now, we stuff the entirety of our props and state into the LoggedInView.
-                 * we should go through and figure out what we actually need to pass down, as well
-                 * as using something like redux to avoid having a billion bits of state kicking around.
-                 */
-                view = (
-                    <LoggedInView
-                        {...this.props}
-                        {...this.state}
-                        ref={this.loggedInView}
-                        matrixClient={MatrixClientPeg.safeGet()}
-                        onRegistered={this.onRegistered}
-                        currentRoomId={this.state.currentRoomId}
+        switch (this.state.view) {
+            case Views.LOADING:
+                return (
+                    <div className="mx_MatrixChat_splash">
+                        <Spinner />
+                    </div>
+                );
+            case Views.CONFIRM_LOCK_THEFT:
+                return (
+                    <ConfirmSessionLockTheftView
+                        onConfirm={() => {
+                            this.setState({ view: Views.LOADING });
+                            this.startInitSession();
+                        }}
                     />
                 );
-            } else {
+            case Views.COMPLETE_SECURITY:
+                return <CompleteSecurity onFinished={this.onCompleteSecurityE2eSetupFinished} />;
+            case Views.E2E_SETUP:
+                return <E2eSetup onCancelled={this.onCompleteSecurityE2eSetupFinished} />;
+            case Views.PENDING_CLIENT_START:
                 // we think we are logged in, but are still waiting for the /sync to complete
-                view = (
+                return (
                     <LoginSplashView
                         matrixClient={MatrixClientPeg.safeGet()}
                         onLogoutClick={this.onLogoutClick}
                         syncError={this.state.syncError}
                     />
                 );
-            }
-        } else if (this.state.view === Views.WELCOME) {
-            view = <Welcome {...this.getServerProperties()} />;
-        } else if (this.state.view === Views.REGISTER && SettingsStore.getValue(UIFeature.Registration)) {
-            const email = ThreepidInviteStore.instance.pickBestInvite()?.toEmail;
-            view = (
-                <Registration
-                    clientSecret={this.state.register_client_secret}
-                    sessionId={this.state.register_session_id}
-                    idSid={this.state.register_id_sid}
-                    email={email}
-                    brand={this.props.config.brand}
-                    onLoggedIn={this.onRegisterFlowComplete}
-                    onLoginClick={this.onLoginClick}
-                    onServerConfigChange={this.onServerConfigChange}
-                    defaultDeviceDisplayName={this.props.defaultDeviceDisplayName}
-                    fragmentAfterLogin={fragmentAfterLogin}
-                    mobileRegister={this.state.isMobileRegistration}
-                    {...this.getServerProperties()}
-                />
-            );
-        } else if (this.state.view === Views.FORGOT_PASSWORD && SettingsStore.getValue(UIFeature.PasswordReset)) {
-            view = (
-                <ForgotPassword
-                    onComplete={this.onLoginClick}
-                    onLoginClick={this.onLoginClick}
-                    {...this.getServerProperties()}
-                />
-            );
-        } else if (this.state.view === Views.LOGIN) {
-            const showPasswordReset = SettingsStore.getValue(UIFeature.PasswordReset);
-            view = (
-                <Login
-                    isSyncing={this.state.pendingInitialSync}
-                    onLoggedIn={this.onUserCompletedLoginFlow}
-                    onRegisterClick={this.onRegisterClick}
-                    fallbackHsUrl={this.getFallbackHsUrl()}
-                    defaultDeviceDisplayName={this.props.defaultDeviceDisplayName}
-                    onForgotPasswordClick={showPasswordReset ? this.onForgotPasswordClick : undefined}
-                    onServerConfigChange={this.onServerConfigChange}
-                    fragmentAfterLogin={fragmentAfterLogin}
-                    defaultUsername={this.props.urlParams?.defaults?.defaultUsername}
-                    {...this.getServerProperties()}
-                />
-            );
-        } else if (this.state.view === Views.SOFT_LOGOUT) {
-            view = (
-                <SoftLogout
-                    urlParams={this.props.urlParams}
-                    onTokenLoginCompleted={this.props.onTokenLoginCompleted}
-                    fragmentAfterLogin={fragmentAfterLogin}
-                />
-            );
-        } else if (this.state.view === Views.LOCK_STOLEN) {
-            view = <SessionLockStolenView />;
-        } else {
-            logger.error(`Unknown view ${this.state.view}`);
-            return null;
+            case Views.LOGGED_IN:
+                // `ready` and `view==LOGGED_IN` may be set before `page_type` (because the
+                // latter is set via the dispatcher). If we don't yet have a `page_type`,
+                // keep showing the spinner for now.
+                if (this.state.ready && this.state.page_type) {
+                    /* for now, we stuff the entirety of our props and state into the LoggedInView.
+                     * we should go through and figure out what we actually need to pass down, as well
+                     * as using something like redux to avoid having a billion bits of state kicking around.
+                     */
+                    return (
+                        <LoggedInView
+                            {...this.props}
+                            {...this.state}
+                            ref={this.loggedInView}
+                            matrixClient={MatrixClientPeg.safeGet()}
+                            onRegistered={this.onRegistered}
+                            currentRoomId={this.state.currentRoomId}
+                        />
+                    );
+                } else {
+                    // we think we are logged in, but are still waiting for the /sync to complete
+                    return (
+                        <LoginSplashView
+                            matrixClient={MatrixClientPeg.safeGet()}
+                            onLogoutClick={this.onLogoutClick}
+                            syncError={this.state.syncError}
+                        />
+                    );
+                }
+            case Views.WELCOME:
+                return <Welcome {...this.getServerProperties()} />;
+            case Views.REGISTER:
+                return (
+                    <Registration
+                        clientSecret={this.state.register_client_secret}
+                        sessionId={this.state.register_session_id}
+                        idSid={this.state.register_id_sid}
+                        email={ThreepidInviteStore.instance.pickBestInvite()?.toEmail}
+                        brand={this.props.config.brand}
+                        onLoggedIn={this.onRegisterFlowComplete}
+                        onLoginClick={this.onLoginClick}
+                        onServerConfigChange={this.onServerConfigChange}
+                        defaultDeviceDisplayName={this.props.defaultDeviceDisplayName}
+                        fragmentAfterLogin={fragmentAfterLogin}
+                        mobileRegister={this.state.isMobileRegistration}
+                        {...this.getServerProperties()}
+                    />
+                );
+            case Views.FORGOT_PASSWORD:
+                return (
+                    <ForgotPassword
+                        onComplete={this.onLoginClick}
+                        onLoginClick={this.onLoginClick}
+                        {...this.getServerProperties()}
+                    />
+                );
+            case Views.LOGIN:
+                return (
+                    <Login
+                        isSyncing={this.state.pendingInitialSync}
+                        onLoggedIn={this.onUserCompletedLoginFlow}
+                        onRegisterClick={this.onRegisterClick}
+                        fallbackHsUrl={this.getFallbackHsUrl()}
+                        defaultDeviceDisplayName={this.props.defaultDeviceDisplayName}
+                        onForgotPasswordClick={
+                            SettingsStore.getValue(UIFeature.PasswordReset) ? this.onForgotPasswordClick : undefined
+                        }
+                        onServerConfigChange={this.onServerConfigChange}
+                        fragmentAfterLogin={fragmentAfterLogin}
+                        defaultUsername={this.props.urlParams?.defaults?.defaultUsername}
+                        {...this.getServerProperties()}
+                    />
+                );
+            case Views.SOFT_LOGOUT:
+                return (
+                    <SoftLogout
+                        urlParams={this.props.urlParams}
+                        onTokenLoginCompleted={this.props.onTokenLoginCompleted}
+                        fragmentAfterLogin={fragmentAfterLogin}
+                    />
+                );
+            case Views.LOCK_STOLEN:
+                return <SessionLockStolenView />;
         }
+    }
+
+    public render(): React.ReactNode {
+        const view = this.getView();
 
         return (
             <ErrorBoundary>

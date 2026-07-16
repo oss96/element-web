@@ -110,10 +110,14 @@ isn't reflected here is invisible to the next session.
   optional `muted` prop and reflects it onto the `<audio>.muted`.
 - `apps/web/src/components/views/voip/AudioFeedArrayForLegacyCall.tsx`
   — subscribes to `IncomingAudioMutedCallsChanged` and forwards the
-  per-call mute state to each `AudioFeed`.
+  per-call mute state to each `AudioFeed`. Reaches the handler via
+  `SDKContextClass.instance.legacyCallHandler` (upstream removed the
+  `LegacyCallHandler.instance` static singleton in the 2026-07 sync).
 - `apps/web/src/components/views/voip/LegacyCallView.tsx` — handles
   `ToggleIncomingAudioInCall` in `onNativeKeyDown` via
-  `LegacyCallHandler.instance.toggleIncomingAudioMuted(call.callId)`.
+  `this.context.legacyCallHandler.toggleIncomingAudioMuted(call.callId)`
+  (the class wires `static contextType = SDKContext`; again, no more
+  `LegacyCallHandler.instance`).
 - `apps/web/src/stores/widgets/ElementWidgetActions.ts` — adds two
   fork-defined actions: `MuteRemoteAudio = "io.element.mute_remote_audio"`
   (toWidget, payload mirrors `DeviceMute`'s `{ audio_enabled? }`) and
@@ -137,12 +141,18 @@ isn't reflected here is invisible to the next session.
   is an `ElementCall`.
 - `apps/web/src/vector/init.tsx` — also calls
   `startElementCallShortcuts()` from `preparePlatform`.
-- `package.json` (root) — build-tooling fix, not a feature: the
-  `devEngines.packageManager` block is removed so pnpm 11 writes a
-  single-document `pnpm-lock.yaml` that nx 22.7.4 can parse. The real
-  dependency document in the lockfile stays byte-identical to upstream.
-  See the pnpm-11/nx gotcha. Must be re-applied after any upstream merge
-  that restores the block.
+- `package.json` (root) — two build-tooling fixes, not features:
+  (1) the `devEngines.packageManager` block is removed so pnpm writes a
+  single-document `pnpm-lock.yaml` that nx can parse (see the pnpm-11/nx
+  gotcha); (2) `"@typescript/old": "npm:typescript@6.0.3"` is added to
+  `devDependencies` so `module-api`'s vite build can resolve the TS-6.0
+  compiler (see the `@typescript/old` gotcha). The lockfile diverges ~181
+  lines from upstream because of (2). Both must be re-applied after any
+  upstream merge.
+- `apps/desktop/project.json` — build-tooling fix: `lib/*.cjs` /
+  `lib/*.d.cts` added to `build:ts` outputs so a cache-replayed build keeps
+  `preload.cjs` (see the nx-cache/preload gotcha). Re-apply if upstream
+  reverts it.
 
 ## Build / installer
 
@@ -247,7 +257,24 @@ See `BUILDING.md` at the repo root.
   --config.confirmModulesPurge=false`. **Re-apply this removal after any
   upstream merge that restores the block**, then regenerate the lockfile
   (`sed -i '1,199d' pnpm-lock.yaml` to drop the stale first doc, then
-  `corepack pnpm@11.2.2 install`).
+  `corepack pnpm@11.5.2 install`).
+- **`module-api`'s vite build can't resolve `@typescript/old` under strict
+  pnpm.** Since the TS-6 sync, `packages/module-api/vite.config.ts` does
+  `require.resolve("@typescript/old")` (to point api-extractor at TS 6.0.3).
+  `@typescript/old` is an *alias* (→`typescript@6.0.3`) that
+  `@typescript/typescript6` declares as a private dep, so pnpm only materialises
+  it inside typescript6's own `node_modules` — never hoisted, so `module-api`
+  can't resolve it and **`module-api:build` and the whole `element-web` webpack
+  build fail with `Cannot find module '@typescript/old'`**. This reproduces on
+  vanilla upstream (the lockfile dep-graph is byte-identical), not fork damage.
+  `public-hoist-pattern` does **not** fix it (pnpm hoists by real package name,
+  not the alias). **Fix applied in this fork:** `"@typescript/old":
+  "npm:typescript@6.0.3"` in root `devDependencies`, which links
+  `node_modules/@typescript/old` at the root where module-api resolves it. A
+  full reinstall (`rm -rf node_modules && corepack pnpm@11.5.2 install`) is
+  needed after adding it — incremental installs report "Already up to date" and
+  skip re-hoisting. **Re-apply after any upstream merge** if the webpack build
+  regresses with this error.
 - **`@element-hq/web-shared-components`'s `.d.ts` files don't survive
   the nx build cache reliably.** If `lint:types` complains about missing
   declarations, force a vite rebuild:
@@ -306,19 +333,32 @@ git merge upstream/develop  # or rebase — same effect, fork is fast-forward-on
 git push
 ```
 
-Upstream is on **pnpm 11.2.2** (object-form `devEngines.packageManager`, no
-corepack `packageManager` string). The fork never touches dependency files,
-so a merge takes upstream's `package.json` / `pnpm-lock.yaml` wholesale. After
-merging: re-strip the `devEngines.packageManager` block from the root
-`package.json` and regenerate a single-document lockfile (see the pnpm-11/nx
-gotcha), then `corepack pnpm@11.2.2 install --config.confirmModulesPurge=false`.
-Last full sync: **2026-05-31**, merging up to upstream `32b66747f4`. That tip
-pins `matrix-js-sdk#develop` (commit `68e5cdea`) whose TS-6.0 `.ts`-extension
-source breaks `lint:types` (4 errors) and jest (setup crash) but **not** the
-webpack build — an upstream develop-on-develop pairing issue, not a fork bug.
+Upstream is on **pnpm 11.5.2** (object-form `devEngines.packageManager`, no
+corepack `packageManager` string). The fork never touches dependency files
+*except* the three build-tooling fixes below, so a merge otherwise takes
+upstream's `package.json` / `pnpm-lock.yaml` wholesale. After merging:
+1. re-strip the `devEngines.packageManager` block from the root `package.json`;
+2. re-add `"@typescript/old": "npm:typescript@6.0.3"` to root `devDependencies`
+   (see the `@typescript/old` gotcha);
+3. re-add `lib/*.cjs` / `lib/*.d.cts` to `apps/desktop/project.json` build:ts
+   outputs;
+then regenerate a single-document lockfile (see the pnpm-11/nx gotcha) and
+`corepack pnpm@11.5.2 install --config.confirmModulesPurge=false`.
+
+Last full sync: **2026-07-16**, merging up to upstream `7ad619e693` (630
+commits from merge-base `afc4e52df4`; no code lost). See `sync-report.md` for
+the full record. This was a **major toolchain sync**: Electron 42→**43.1.0**,
+nx 22.7.5→**23.0.2**, pnpm 11.2.2→**11.5.2**, TypeScript moved to the **TS 6 /
+`@typescript/native` split**; test runner **jest→vitest** (co-located
+`src/**/*.test.{ts,tsx}`); lint/format **eslint+prettier→oxlint+oxfmt** (+`knip`).
+Upstream still pins a `matrix-js-sdk#develop` snapshot whose TS-6.0 source
+leaves **3 baseline `lint:types` errors, all inside the SDK**
+(`MSC4108SignInWithQR.ts`) — none in fork/app code; the webpack build stays
+green because it transpiles rather than type-checks.
 
 Likely conflict sites if upstream churns:
-- `package.json` (root) — the removed `devEngines.packageManager` block; a merge that re-adds or edits it will re-introduce the two-document lockfile and break nx until the removal is re-applied.
+- `package.json` (root) — the removed `devEngines.packageManager` block and the added `@typescript/old` alias; a merge that re-adds the block re-introduces the two-document lockfile (breaks nx) and dropping the alias breaks the module-api/webpack build. Both must be re-applied.
+- `apps/web/src/components/views/voip/LegacyCallView.tsx` / `AudioFeedArrayForLegacyCall.tsx` — access the singleton via `SDKContext`/`SDKContextClass`, not `LegacyCallHandler.instance`; if upstream reworks the SDKContext plumbing these need re-checking.
 - `apps/web/src/settings/Settings.tsx` — interface entries are alphabetically grouped; new neighbours will conflict.
 - `apps/web/src/i18n/strings/en_EN.json` — adjacent keyboard and voip keys.
 - `apps/web/src/accessibility/KeyboardShortcutUtils.ts` — small surface, low risk.
@@ -329,39 +369,49 @@ Likely conflict sites if upstream churns:
 
 ## Tests
 
+Upstream migrated from **jest to vitest** (2026-07 sync). Tests are now
+co-located and collected as `src/**/*.test.{ts,tsx}` per project (`globals:
+false`, so each test imports `{ describe, it, expect }` from `"vitest"`).
+
 ```bash
 cd apps/web
-pnpm exec jest --testPathPatterns="(KeyBinding|Keyboard)"
+pnpm exec vitest run src/accessibility/KeyboardShortcutsCustomization.test.ts
 ```
 
-41 tests, 5 suites. The KeyboardUserSettingsTab snapshot test passes
-because `window.electron` is undefined in jsdom — the desktop-only Global
-toggle is hidden in the snapshot.
+The fork's own test is `apps/web/src/accessibility/KeyboardShortcutsCustomization.test.ts`
+(31 cases, pure helpers), migrated from the old jest path during the vitest
+sync. Vitest **only** collects `src/**/*.test.{ts,tsx}` — a test left at the
+old `test/unit-tests/*-test.ts` path is silently not run. (Upstream is
+mid-migration: ~486 of its own tests are still at the old path and dormant.)
 
-> **As of the 2026-05-31 sync, jest can't run at all.** `test/setupTests.ts`
-> imports `matrix-js-sdk/src/...`, and the `matrix-js-sdk#develop` snapshot
-> upstream pins uses TS-6.0 `.ts`-extension imports jest's transform config
-> doesn't handle, so every suite fails at setup (`SyntaxError: Cannot use
-> import statement outside a module`). Upstream develop-on-develop pairing
-> issue, not a fork regression; clears when upstream realigns its SDK pin or
-> jest transform. The fork's own test code is unchanged and still type-checks.
+The upstream `KeyboardShortcutUtils` / `KeyboardShortcut` / `KeyboardUserSettingsTab`
+tests are unmodified-upstream and still at `test/unit-tests/` (dormant upstream
+too); they are not fork tests and were intentionally left for upstream to
+migrate. The `KeyboardUserSettingsTab` snapshot passes because `window.electron`
+is undefined in the test env — the desktop-only Global toggle is hidden.
 
 ## Lint pipeline
 
+Upstream migrated eslint→**oxlint** and prettier→**oxfmt** (2026-07 sync).
+
 ```bash
-pnpm -r lint:types   # nx tsc across web + desktop + packages
-pnpm -r lint:js      # eslint with --max-warnings 0
-pnpm -r lint:style   # stylelint res/css/**/*.pcss
-pnpm lint:prettier   # prettier --check .
+pnpm -r --workspace-concurrency=1 lint:types   # nx tsc (TS 6) across web + desktop + packages
+pnpm exec oxlint      # lint:js — replaces eslint
+pnpm exec stylelint "apps/web/res/css/**/*.pcss"   # lint:style
+pnpm exec oxfmt --check   # lint:fmt — replaces prettier
 ```
 
-(pnpm 11 dropped the root `pnpm lint:types` shorthand; the root `lint` script
-chains the recursive `-r` forms above.) All must be clean before `pnpm build`
-will produce a shippable web bundle. `pnpm i18n` (which runs `matrix-i18n-lint`
-internally) must also pass after any new `_t()` / `_td()` strings.
+The root `lint` script chains `lint:types` + `lint:fmt` + `lint:js` +
+`lint:style` + `lint:workflows` + `lint:knip`. `pnpm i18n` (runs
+`matrix-i18n-lint`) must also pass after any new `_t()` / `_td()` strings.
 
-> **As of the 2026-05-31 sync, `pnpm -r lint:types` reports 4 errors, all
-> inside the pinned `matrix-js-sdk#develop` source** (`MSC4108SignInWithQR.ts`,
-> `rust-crypto.ts`) — none in fork or app code. Same upstream SDK-pairing root
-> cause as the jest note above; the webpack build (`pnpm --filter element-web
-> build`) stays green because it transpiles rather than type-checks.
+> **`pnpm -r lint:types` reports 3 baseline errors, all inside the pinned
+> `matrix-js-sdk#develop` source** (`MSC4108SignInWithQR.ts`) — none in fork or
+> app code. The nx task exits non-zero purely because of them; verify with a raw
+> `pnpm exec tsc --noEmit` in `apps/web` and grep out `matrix-js-sdk` to confirm
+> 0 fork/app errors. The webpack build stays green (transpiles, not type-checks).
+>
+> **`oxfmt --check` is NOT runnable on the Windows checkout.** `core.autocrlf=true`
+> gives CRLF working-tree files; oxfmt expects LF and flags *every* file
+> (including untouched upstream ones). CI runs it on LF. **Never run `oxfmt`
+> (fix) locally** — it would rewrite thousands of files to LF.
