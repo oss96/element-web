@@ -138,7 +138,15 @@ isn't reflected here is invisible to the next session.
   per-call mute state to each `AudioFeed`.
 - `apps/web/src/components/views/voip/LegacyCallView.tsx` — handles
   `ToggleIncomingAudioInCall` in `onNativeKeyDown` via
-  `LegacyCallHandler.instance.toggleIncomingAudioMuted(call.callId)`.
+  `LegacyCallHandler.instance.toggleIncomingAudioMuted(call.callId)`. Also owns
+  screenshare-audio capture quality: `onScreenshareClick` requests the shared
+  audio with `SCREENSHARE_AUDIO_CONSTRAINTS` (echoCancellation / noiseSuppression
+  / autoGainControl all `false`) so the loopback track never joins the mic's
+  AEC/APM — otherwise the shared audio ducks out whenever either party speaks.
+  `tuneScreenshareAudioTrack()` then sets the track's `contentHint = "music"`,
+  re-asserts the constraints, and best-effort bumps the Opus `maxBitrate`. The
+  no-processing behaviour is runtime-only (Electron/Chromium loopback) and not
+  exercised by jest — verify on a real desktop build with two participants.
 - `apps/web/src/stores/widgets/ElementWidgetActions.ts` — adds two
   fork-defined actions: `MuteRemoteAudio = "io.element.mute_remote_audio"`
   (toWidget, payload mirrors `DeviceMute`'s `{ audio_enabled? }`) and

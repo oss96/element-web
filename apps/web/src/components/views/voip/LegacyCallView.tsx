@@ -30,6 +30,18 @@ import { getKeyBindingsManager } from "../../../KeyBindingsManager";
 import { KeyBindingAction } from "../../../accessibility/KeyboardShortcuts";
 import { playIncomingAudioToggleTone, playMicToggleTone } from "../../../audio/CallMuteTones";
 
+// Capture constraints for shared screen/application audio. The mic-style
+// processing must be OFF: leaving echo cancellation on routes the loopback
+// track through the same audio-processing module as the microphone, whose AEC
+// reference is the call playout — so the shared audio ducks out whenever either
+// party speaks. Noise suppression and auto gain also degrade media. Disabling
+// all three keeps the shared audio clean and full-duplex.
+const SCREENSHARE_AUDIO_CONSTRAINTS: MediaTrackConstraints = {
+    echoCancellation: false,
+    noiseSuppression: false,
+    autoGainControl: false,
+};
+
 interface IProps {
     // The call for us to display
     call: MatrixCall;
@@ -271,10 +283,15 @@ export default class LegacyCallView extends React.Component<IProps, IState> {
         if (this.state.screensharing) {
             isScreensharing = await this.props.call.setScreensharingEnabled(false);
         } else {
-            // Pass audio: true so the SDK requests an audio track from getDisplayMedia.
-            // On Electron the desktop picker surfaces an opt-in checkbox; in the browser
-            // the native picker shows the platform's own "Share tab audio" option.
-            isScreensharing = await this.props.call.setScreensharingEnabled(true, { audio: true });
+            // Request the screen/application audio with mic-style processing disabled
+            // (see SCREENSHARE_AUDIO_CONSTRAINTS). The SDK types `audio` as boolean but
+            // forwards it verbatim to getDisplayMedia, so a constraints object is honoured
+            // at runtime. On Electron the desktop picker still surfaces the opt-in audio
+            // checkbox; in the browser the native picker shows "Share tab audio".
+            isScreensharing = await this.props.call.setScreensharingEnabled(true, {
+                audio: SCREENSHARE_AUDIO_CONSTRAINTS as unknown as boolean,
+            });
+            if (isScreensharing) this.tuneScreenshareAudioTrack();
         }
 
         this.props.setSidebarShown?.(true);
@@ -283,6 +300,40 @@ export default class LegacyCallView extends React.Component<IProps, IState> {
             screensharing: isScreensharing,
         });
     };
+
+    // Tune the freshly-captured screenshare audio track for media playback:
+    // hint the Opus encoder that this is music (full-band, no DTX) and, as a
+    // belt-and-braces measure, re-assert the no-processing constraints in case
+    // the platform dropped them at capture time. Best-effort raise of the Opus
+    // bitrate too (peerConn is private on MatrixCall, so reach it defensively).
+    // Never throws — quality tuning must not break sharing.
+    private tuneScreenshareAudioTrack(): void {
+        const feed = this.props.call
+            .getLocalFeeds()
+            .find((f) => f.purpose === SDPStreamMetadataPurpose.Screenshare);
+        const track = feed?.stream.getAudioTracks()[0];
+        if (!track) return;
+
+        track.contentHint = "music";
+        void track.applyConstraints(SCREENSHARE_AUDIO_CONSTRAINTS).catch(() => {});
+
+        try {
+            const pc = (this.props.call as unknown as { peerConn?: RTCPeerConnection }).peerConn;
+            const sender = pc?.getSenders().find((s) => s.track === track);
+            if (sender) {
+                const params = sender.getParameters();
+                // Can't add encodings via setParameters; only raise an existing one.
+                if (params.encodings?.length) {
+                    for (const encoding of params.encodings) {
+                        encoding.maxBitrate = 256_000;
+                    }
+                    void sender.setParameters(params).catch(() => {});
+                }
+            }
+        } catch {
+            // best-effort — leave the default bitrate if anything is unavailable
+        }
+    }
 
     // we register global shortcuts here, they *must not conflict* with local shortcuts elsewhere or both will fire
     // Note that this assumes we always have a LegacyCallView on screen at any given time

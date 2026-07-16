@@ -139,11 +139,30 @@ source changes.
 ### 8. System-audio sharing in the legacy screenshare picker
 
 `LegacyCallView.onScreenshareClick` now requests audio from `getDisplayMedia`
-(`setScreensharingEnabled(true, { audio: true })`). Desktop builds open the
-custom `DesktopCapturerSourcePicker` which now exposes an "Also share audio"
+with the mic-style processing **disabled** — it passes
+`setScreensharingEnabled(true, { audio: SCREENSHARE_AUDIO_CONSTRAINTS })` where
+`SCREENSHARE_AUDIO_CONSTRAINTS = { echoCancellation: false, noiseSuppression:
+false, autoGainControl: false }` (the SDK types `audio` as `boolean` but forwards
+it verbatim to `getDisplayMedia`, so a constraints object is honoured at
+runtime; cast through `as unknown as boolean`). This is essential: with the
+defaults on, Chromium routes the loopback track through the **same audio-
+processing module as the microphone**, whose AEC reference is the call playout,
+so the shared audio **ducks out whenever either party speaks** (and NS/AGC
+mangle media quality). Right after enabling, `tuneScreenshareAudioTrack()` sets
+the captured track's `contentHint = "music"` (full-band Opus, no DTX),
+re-asserts the no-processing constraints via `applyConstraints` (belt-and-
+braces), and best-effort raises the sender's Opus `maxBitrate` to 256 kbps
+(reaching the private `peerConn` defensively; never throws). Desktop builds open
+the custom `DesktopCapturerSourcePicker` which exposes an "Also share audio"
 checkbox. For whole-screen sources the main-process display-media handler
 returns `audio: "loopback"` (system-wide WASAPI loopback) on Windows/macOS
 (skipped on Linux where Electron's behaviour is undefined).
+
+> History: originally `{ audio: true }`; briefly reverted to video-only
+> (`setScreensharingEnabled(true)`) as a diagnostic for a "screenshare can't be
+> stopped" bug, then restored here with the no-processing constraints. The
+> stop-behaviour with a two-track (video + loopback audio) stream still needs
+> real-build verification — see `progress.md`.
 
 Because audio is always _requested_ (so the checkbox can be offered), the
 main-process handler must **omit** the `audio` key entirely when the user
