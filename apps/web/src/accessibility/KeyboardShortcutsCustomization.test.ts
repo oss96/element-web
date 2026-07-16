@@ -5,6 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only OR GPL-3.0-only OR LicenseRef-Element-Com
 Please see LICENSE files in the repository root for full details.
 */
 
+import { describe, it, expect } from "vitest";
+
 import {
     captureCombo,
     comboCanBeGlobal,
@@ -12,9 +14,9 @@ import {
     findConflicts,
     isComboCleared,
     toElectronAccelerator,
-} from "../../../src/accessibility/KeyboardShortcutsCustomization";
-import { KeyBindingAction } from "../../../src/accessibility/KeyboardShortcuts";
-import { type KeyCombo } from "../../../src/KeyBindingsManager";
+} from "./KeyboardShortcutsCustomization";
+import { KeyBindingAction } from "./KeyboardShortcuts";
+import { type KeyCombo } from "../KeyBindingsManager";
 
 const makeEvent = (
     key: string,
