@@ -12,6 +12,7 @@ import { randomArray } from "./utils.js";
 import { getDisplayMediaCallback, setDisplayMediaCallback } from "./displayMediaCallback.js";
 import { resolveAudioForSource } from "./windowAudio.js";
 import Store, { clearDataAndRelaunch } from "./store.js";
+import { getConfig } from "./config.js";
 
 type SourcesOptions = Electron.SourcesOptions;
 
@@ -204,7 +205,7 @@ ipcMain.on("ipcCall", async function (_ev: IpcMainEvent, payload) {
             // `result_dict.Has("audio")` branch in electron_browser_context.cc).
             // Omitting the key entirely yields a clean video-only stream.
             if (audio) streams.audio = audio;
-            await getDisplayMediaCallback()?.(streams);
+            getDisplayMediaCallback()?.(streams);
             setDisplayMediaCallback(null);
             ret = null;
             break;
@@ -279,7 +280,7 @@ ipcMain.on("ipcCall", async function (_ev: IpcMainEvent, payload) {
     });
 });
 
-ipcMain.handle("getConfig", () => global.vectorConfig);
+ipcMain.handle("getConfig", getConfig);
 
 const initialisePromiseWithResolvers = Promise.withResolvers<void>();
 export const initialisePromise = initialisePromiseWithResolvers.promise;

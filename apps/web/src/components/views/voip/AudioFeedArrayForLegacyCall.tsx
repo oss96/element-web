@@ -11,7 +11,8 @@ import { CallEvent, type MatrixCall } from "matrix-js-sdk/src/webrtc/call";
 import { type CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 
 import AudioFeed from "./AudioFeed";
-import LegacyCallHandler, { LegacyCallHandlerEvent } from "../../../LegacyCallHandler";
+import { LegacyCallHandlerEvent } from "../../../LegacyCallHandler";
+import { SDKContextClass } from "../../../contexts/SDKContextClass.ts";
 
 interface IProps {
     call: MatrixCall;
@@ -28,13 +29,13 @@ export default class AudioFeedArrayForLegacyCall extends React.Component<IProps,
 
         this.state = {
             feeds: this.props.call.getRemoteFeeds(),
-            incomingAudioMuted: LegacyCallHandler.instance.isIncomingAudioMuted(this.props.call.callId),
+            incomingAudioMuted: SDKContextClass.instance.legacyCallHandler.isIncomingAudioMuted(this.props.call.callId),
         };
     }
 
     public componentDidMount(): void {
         this.props.call.addListener(CallEvent.FeedsChanged, this.onFeedsChanged);
-        LegacyCallHandler.instance.addListener(
+        SDKContextClass.instance.legacyCallHandler.addListener(
             LegacyCallHandlerEvent.IncomingAudioMutedCallsChanged,
             this.onIncomingAudioMutedChanged,
         );
@@ -42,7 +43,7 @@ export default class AudioFeedArrayForLegacyCall extends React.Component<IProps,
 
     public componentWillUnmount(): void {
         this.props.call.removeListener(CallEvent.FeedsChanged, this.onFeedsChanged);
-        LegacyCallHandler.instance.removeListener(
+        SDKContextClass.instance.legacyCallHandler.removeListener(
             LegacyCallHandlerEvent.IncomingAudioMutedCallsChanged,
             this.onIncomingAudioMutedChanged,
         );
@@ -56,7 +57,7 @@ export default class AudioFeedArrayForLegacyCall extends React.Component<IProps,
 
     private onIncomingAudioMutedChanged = (): void => {
         this.setState({
-            incomingAudioMuted: LegacyCallHandler.instance.isIncomingAudioMuted(this.props.call.callId),
+            incomingAudioMuted: SDKContextClass.instance.legacyCallHandler.isIncomingAudioMuted(this.props.call.callId),
         });
     };
 
