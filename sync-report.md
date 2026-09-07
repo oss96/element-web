@@ -117,3 +117,102 @@ moving them ahead would only create future conflicts).
 - Feature branch merge (`develop` → `feat/screenshare-audio-by-application`)
   still to be done; expect a `LegacyCallView.tsx` conflict against the
   screenshare-audio tuning commit.
+
+## 2026-09-07 — sync develop to upstream `9a536a3419`
+
+**Range merged:** merge-base `7ad619e693` → upstream/develop `9a536a3419`
+(`Fix module composer upload options appearing twice`, #34920). 374 upstream
+commits, ~8 weeks. Pre-merge develop tip: `a24d2156e0` (abort target).
+
+**Branch strategy:** merged `upstream/develop` into `develop` first, then
+`develop` into `feat/screenshare-audio-by-application`. The feature branch's
+dirty tree (a BUILDING.md nx-daemon EPERM troubleshooting note plus CRLF noise)
+was stashed before the merge and restored afterwards.
+
+### Major upstream changes landing in this sync
+
+- **Electron 43.1.0 → 44.0.0** (major). `applicationLoopback` escape hatch
+  re-verified: `shell/browser/electron_browser_context.cc` on the `44-x-y`
+  branch still carries the `"escape hatch"` raw `{ id, name }` audio parser, so
+  `windowAudio.ts` per-application screenshare audio keeps working.
+- **pnpm 11.5.2 → 11.23.0**, **nx 23.0.2 → 23.1.2** (now via `catalog:`),
+  **TypeScript catalog → 7.0.2** (`@typescript/native`), `ts6` catalog stays at
+  6.0.x. `@typescript/old` is still `require.resolve`d by
+  `packages/module-api/vite.config.ts`, so the fork's root alias is still needed.
+- **oxlint gained `typescript/no-floating-promises`** and the restriction
+  ruleset; upstream prefixed hundreds of calls with `void`. `lint:js` is now
+  `nx run-many -t lint:prepare -p && oxlint`.
+- **Jest → vitest migration finished for the fork's surface.** The four
+  upstream tests the fork had edited under `test/unit-tests/` were moved to
+  co-located `src/**/*.test.tsx` and converted to `vi.*`. Git rename-detection
+  carried the fork's edits across.
+- **Pickle-key hardening in `apps/desktop/src/ipc.ts`** (element-web#32521 /
+  #32715): `createPickleKey` now refuses to overwrite an existing but currently
+  undecryptable key, and `getPickleKey` returns `null` on decrypt failure
+  instead of destroying the secret. This targets the "session and encryption
+  lost after a Windows reboot" failure the fork has been watching.
+- `getDisplayMediaCallback` / `setDisplayMediaCallback` replaced by
+  `consumeDisplayMediaCallback`; `desktopCapturer.getSources` wrapped in
+  try/catch upstream.
+- `$spacing-*` PostCSS variables removed; Compound `var(--cpd-space-*)` tokens
+  everywhere.
+- `feature_custom_themes` lab removed; `Notifications.activityIsUnread`,
+  `RoomList.showPeopleSection`, `RoomList.SectionExpansionState`,
+  `composerUrlPreviewCollapsed` settings added (no clash with `Keyboard.*`).
+
+### Conflicts (10) and how each was resolved
+
+| File | Cause | Resolution |
+| --- | --- | --- |
+| `package.json` | upstream bumped the `devEngines.packageManager` block the fork removes | kept it stripped (fork side); `@typescript/old` alias survived untouched |
+| `pnpm-lock.yaml` | both sides rewrote | took upstream's file, dropped the 199-line `packageManagerDependencies` first document, `corepack pnpm@11.23.0 install` re-added the `@typescript/old` importer entry (+3 lines) |
+| `apps/desktop/src/ipc.ts` | upstream switched to `consumeDisplayMediaCallback()` | `consumeDisplayMediaCallback()?.({ video: args[0], audio: args[1] ? "loopback" : undefined })` |
+| `apps/web/res/css/views/settings/tabs/user/_KeyboardUserSettingsTab.pcss` | upstream replaced `$spacing-8` with `var(--cpd-space-2x)` | kept fork's `flex-wrap` / `row-gap`, moved all three fork `$spacing-*` uses to `--cpd-space-*` tokens |
+| `apps/web/src/accessibility/KeyboardShortcutUtils.ts` | upstream dropped the `as KeyBindingAction` casts and switched to `getSettingDisabled()` | fork's user-override merge re-applied on the cast-free `key` |
+| `apps/web/src/components/views/voip/AudioFeedArrayForLegacyCall.tsx` | upstream changed the React key to `deviceId + userId` | upstream key + fork `muted` prop |
+| `apps/web/src/components/views/voip/LegacyCallView.tsx` (3 hunks) | upstream collapsed the `<VideoFeed>` JSX to one-liners with `primaryFeed!` | upstream's non-null assertion, fork's `micFeed={primaryMicFeed}` re-added |
+| `apps/web/src/components/views/voip/VideoFeed.tsx` (2 hunks) | upstream `void`-prefixed `playMedia()` | fork's `updateMicSource` lifecycle kept (mount-time `playMedia()` stays removed — `updateFeed` already plays), `void` added |
+| `apps/web/src/components/views/voip/LegacyCallView.test.tsx` | rename + `jest`→`vi` | fork's `isSpeaking` mock re-added to **all three** feed mocks (one sat outside the conflict hunk and only failed at runtime) |
+| `apps/web/src/components/views/voip/VideoFeed.test.tsx` | rename + `jest`→`vi` | fork's `isSpeaking` mock re-added |
+
+### Semantic fixes with no git conflict (would have silently broken the fork)
+
+- `apps/web/src/components/views/elements/DesktopCapturerSourcePicker.test.tsx`
+  auto-merged through the rename but kept two `jest.fn()` calls inside the
+  fork-added tests → `vi.fn()`.
+- **knip** (`lint:knip`) failed on three fork items: unused export
+  `isShortcutGlobal` (deleted — nothing called it), duplicate
+  named + default export in `CallMicIndicator.tsx` (default removed; `CallView`
+  imports the named one), and `@typescript/old` listed in `knip.ts`
+  `ignoreDependencies` while being a real root devDependency in the fork
+  (entry removed — `knip.ts` is now a fork-modified file).
+- `pnpm i18n` re-sorted `numpad_prefix` in `en_EN.json`; no new or missing keys.
+- `apps/desktop/project.json` `lib/*.cjs` / `lib/*.d.cts` outputs survived
+  with no conflict (verified by grep).
+
+### Verify ladder results
+
+| Gate | Result |
+| --- | --- |
+| Webpack build (`pnpm --filter element-web build`) | ✅ green, 1m47s |
+| `tsc --noEmit` apps/web (all three tsconfigs) | ✅ 0 fork/app errors; **7** baseline errors inside `matrix-js-sdk` (`embedded.ts` ×4, `MSC4108SignInWithQR.ts` ×3) — SDK pin, not a fork regression. `nx lint:types` exits non-zero only because of them |
+| `tsc --noEmit` apps/desktop | ✅ clean |
+| `oxlint` | ✅ clean (incl. new `no-floating-promises`) |
+| `stylelint` (`pnpm -C apps/web lint:style`) | ✅ clean |
+| `lint:knip` | ✅ clean after the three fixes above |
+| `pnpm i18n` | ✅ clean |
+| `oxfmt --check` | ⚠️ not verifiable on the CRLF Windows checkout (unchanged) |
+| vitest (10 fork-touched files) | ✅ 169 tests pass: `KeyboardShortcutsCustomization` (31), `KeyBindingsManager`, `KeyboardShortcutUtils`, `KeyboardUserSettingsTab`, `KeyboardShortcut`, `DesktopCapturerSourcePicker`, `LegacyCallView`, `VideoFeed`, `ElectronPlatform`, `Call` |
+| Feature-survival greps | ✅ all fork symbols present (`getUserShortcutOverrides`, `startGlobalShortcutsBridge`, `startElementCallShortcuts`, `CallMicIndicator`, `ToggleIncomingAudioInCall`, `MuteRemoteAudio`, `DeviceMuteState`, `SpeakingState`, `unshiftedFromCode`, IPC channels, i18n keys) |
+| Electron 44 `applicationLoopback` escape hatch | ✅ present on `44-x-y` |
+
+### Follow-ups / risks
+
+- **Runtime check on a packaged Electron 44 build still owed**: per-app
+  screenshare audio, the WGC window-thumbnail crash workaround
+  (`getDesktopCapturerSourcesSafe` — Chromium bumped, behaviour may differ),
+  the asar integrity stamp, and whether upstream's pickle-key hardening ends
+  the post-reboot session loss.
+- The 7 SDK baseline `lint:types` errors persist until upstream realigns its
+  `matrix-js-sdk#develop` pin.
+- `oxfmt` still unverifiable locally (CRLF); rely on CI.

@@ -26,6 +26,7 @@ import {
     MatrixRTCSessionManagerEvents,
 } from "matrix-js-sdk/src/matrixrtc";
 
+// oxlint-disable-next-line no-restricted-imports
 import type EventEmitter from "events";
 import type { IApp } from "../stores/WidgetStore";
 import SettingsStore from "../settings/SettingsStore";
@@ -236,6 +237,7 @@ export abstract class Call extends TypedEventEmitter<CallEvent, CallEventHandler
         // The widget might still be initializing, so wait for it in an async
         // event loop. We need the messaging to be both present and started
         // (have a connected widget API), so register listeners for both cases.
+        // oxlint-disable-next-line no-unmodified-loop-condition
         while (!messaging?.widgetApi) {
             if (messaging) logger.debug(`Messaging present but not yet started for ${this.widgetUid}`);
             else logger.debug(`No messaging yet for ${this.widgetUid}`);
@@ -345,6 +347,7 @@ export abstract class Call extends TypedEventEmitter<CallEvent, CallEventHandler
     };
 }
 
+/** @knipignore - exported for tests */
 export type { JitsiCallMemberContent };
 
 /**
@@ -440,7 +443,7 @@ export class JitsiCall extends Call {
         const event = this.room.currentState.getStateEvents(JitsiCall.MEMBER_EVENT_TYPE, this.client.getUserId()!);
         const content = event?.getContent<JitsiCallMemberContent>();
         const expiresAt = typeof content?.expires_ts === "number" ? content.expires_ts : -Infinity;
-        const devices = expiresAt > Date.now() && Array.isArray(content?.devices) ? content!.devices : [];
+        const devices = expiresAt > Date.now() && Array.isArray(content?.devices) ? content.devices : [];
         const newDevices = fn(devices);
 
         if (newDevices !== null) {

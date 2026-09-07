@@ -12,6 +12,7 @@ import { decode } from "html-entities";
 import type { UrlPreview } from "@element-hq/web-shared-components";
 import { mediaFromMxc } from "../customisations/Media";
 import { thumbHeight } from "../ImageUtils";
+import { type UnstableBundledUrlPreviewSingle } from "../../@types/url-preview";
 
 const logger = rootLogger.getChild("UrlPreviewFetcher");
 
@@ -205,5 +206,80 @@ export class UrlPreviewFetcher {
         } satisfies UrlPreview;
         this.cache.set(link, result);
         return result;
+    }
+
+    /**
+     * Convert an MSC4095 URL preview bundle item to a UrlPreview.
+     * This will load previews via the server if `single` only contains `matched_url`.
+     *
+     * @param single A single preview.
+     * @param body The message text body. `matched_url` must appear within it.
+     * @param loadMedia Whether to include the preview image WHEN falling back to loading
+     *                  from the server. Pass false when media is hidden.
+     */
+    public async previewFromBundle(
+        single: UnstableBundledUrlPreviewSingle,
+        body: string,
+        loadMedia = false,
+    ): Promise<UrlPreview | null> {
+        if (!URL.canParse(single.matched_url)) {
+            return null;
+        }
+        const url = new URL(single.matched_url);
+        if (url.protocol !== "http:" && url.protocol !== "https:") {
+            // Invalid protocol, skip.
+            return null;
+        }
+
+        if (!body.includes(single.matched_url)) {
+            return null;
+        }
+
+        if (Object.keys(single).length === 1) {
+            // We ONLY have the matched_url, so request a preview.
+            return await this.fetchPreview(single.matched_url, loadMedia);
+        }
+
+        const preview: UrlPreview = {
+            link: single.matched_url,
+            title: single["og:title"] ?? single.matched_url,
+            siteName: url.hostname,
+            showTooltipOnLink: !!(single.matched_url !== single["og:title"] && this.showTooltips),
+            description: single["og:description"],
+            ogUrl: single["og:url"],
+        };
+
+        // missing fields from the bundle because backend does provide it:
+        // - siteName (can be computed)
+        // - favicon
+        // - media is a video or audio?
+        // TODO in next PR: URL previews in encrypted chat?
+        if (
+            typeof single["og:image"] === "string" &&
+            typeof single["og:image:type"] === "string" &&
+            typeof single["og:image:width"] === "number" &&
+            typeof single["og:image:height"] === "number"
+        ) {
+            const media = mediaFromMxc(single["og:image"], this.client);
+            const thumb = media.getThumbnailOfSourceHttp(PREVIEW_WIDTH_PX, PREVIEW_HEIGHT_PX, "scale");
+
+            // cannot rule out the mxc:// url is malformed because
+            // the sender can specify anything
+            if (media.srcHttp === null || thumb === null) {
+                return preview;
+            }
+
+            preview.image = {
+                imageThumb: thumb,
+                imageFull: media.srcHttp,
+                imageType: single["og:image:type"],
+                mxcImageFull: single["og:image"],
+                width: single["og:image:width"],
+                height: single["og:image:height"],
+                playable: false, // TODO: do we know?
+            };
+        }
+
+        return preview;
     }
 }

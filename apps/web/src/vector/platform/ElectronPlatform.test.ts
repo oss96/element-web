@@ -124,7 +124,10 @@ describe("ElectronPlatform", () => {
         await waitForIPCSend;
 
         expect(event).toBeTruthy();
-        expect(Modal.createDialog).toHaveBeenCalledWith(DesktopCapturerSourcePicker, { offerAudio: true });
+        expect(Modal.createDialog).toHaveBeenCalledWith(DesktopCapturerSourcePicker, {
+            offerAudio: true,
+            allowWindowAudio: false,
+        });
         // @ts-ignore mock
         expect(plat.ipc.call).toHaveBeenCalledWith("callDisplayMediaCallback", "source", true);
     });

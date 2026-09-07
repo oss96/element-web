@@ -79,10 +79,6 @@ export const getGlobalShortcutActions = (): KeyBindingAction[] => {
     return (SettingsStore.getValue(GLOBALS_SETTING) ?? []) as KeyBindingAction[];
 };
 
-export const isShortcutGlobal = (action: KeyBindingAction): boolean => {
-    return getGlobalShortcutActions().includes(action);
-};
-
 export const setShortcutGlobal = async (action: KeyBindingAction, enabled: boolean): Promise<void> => {
     const current = getGlobalShortcutActions();
     const isCurrentlyOn = current.includes(action);

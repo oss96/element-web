@@ -118,9 +118,7 @@ class LoginComponent extends React.PureComponent<IProps, IState> {
             "m.login.password": this.renderPasswordStep,
 
             // CAS and SSO are the same thing, modulo the url we link to
-            // eslint-disable-next-line @typescript-eslint/naming-convention
             "m.login.cas": () => this.renderSsoStep("cas"),
-            // eslint-disable-next-line @typescript-eslint/naming-convention
             "m.login.sso": () => this.renderSsoStep("sso"),
             "oauthNativeFlow": () => this.renderOAuth2Step(),
         };
@@ -128,7 +126,7 @@ class LoginComponent extends React.PureComponent<IProps, IState> {
 
     public componentDidMount(): void {
         this.unmounted = false;
-        this.initLoginLogic(this.props.serverConfig);
+        void this.initLoginLogic(this.props.serverConfig);
     }
 
     public componentWillUnmount(): void {
@@ -144,7 +142,7 @@ class LoginComponent extends React.PureComponent<IProps, IState> {
             prevProps.serverConfig.delegatedAuthentication !== this.props.serverConfig.delegatedAuthentication
         ) {
             // Ensure that we end up actually logging in to the right place
-            this.initLoginLogic(this.props.serverConfig);
+            void this.initLoginLogic(this.props.serverConfig);
         }
     }
 
