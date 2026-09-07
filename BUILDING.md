@@ -1,15 +1,16 @@
 # Building the patched Element Desktop installer
 
 A walkthrough for producing a Windows installer of this fork from a fresh
-checkout. Tested on Windows 11 with Node 22.x and pnpm 10.33.3.
+checkout. Tested on Windows 11 with Node 22.x and pnpm 11.23.0 (Electron
+44.0.0, electron-builder 26.15.3, as of the 2026-09 upstream sync).
 
 ## Prerequisites
 
 - **Node ≥ 22.18** (the monorepo's `engines.node`)
-- **pnpm 10.33.3** — match the `packageManager` field exactly to avoid
-  workspace-protocol surprises:
+- **pnpm 11.23.0** — the fork strips upstream's `devEngines.packageManager`
+  self-management, so install via corepack rather than a global:
     ```powershell
-    npm install -g pnpm@10.33.3
+    corepack pnpm@11.23.0 install --config.confirmModulesPurge=false
     ```
 - **Git** with longpaths enabled (the deeper paths under `node_modules/`
   cross Windows's 260-char limit otherwise):
@@ -113,6 +114,27 @@ rm -rf packages/shared-components/dist
 cd packages/shared-components
 pnpm exec vite build
 ```
+
+### electron-builder fails with "EPERM: operation not permitted, rename 'dist\win-unpacked.tmp' -> 'dist\win-unpacked'"
+
+electron-builder extracts the Electron zip into `win-unpacked.tmp` and then
+renames it to `win-unpacked`. On Windows the **nx daemon's file-watcher**
+(a `node .../nx/dist/src/daemon/server/start.js` process, started by the
+earlier `nx build:ts` / `nx build:res` steps) keeps a handle on the workspace
+tree, including `apps/desktop/dist`, so the rename fails with EPERM — even a
+manual `Rename-Item` on the `.tmp` dir is "Access denied". It reproduces
+deterministically, so it isn't a transient AV lock.
+
+Fix: stop the daemon and re-run electron-builder with it disabled:
+
+```powershell
+pnpm exec nx daemon --stop
+Remove-Item -Recurse -Force apps\desktop\dist\win-unpacked, apps\desktop\dist\win-unpacked.tmp -ErrorAction SilentlyContinue
+$env:NX_DAEMON = "false"; pnpm exec electron-builder --win squirrel
+```
+
+(Setting `NX_DAEMON=false` for the builder step also stops it restarting the
+daemon mid-build. electron-builder itself doesn't use nx, so this is safe.)
 
 ### "EBUSY: resource busy or locked" on `dist/__msi-x64`
 
