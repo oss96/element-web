@@ -23,7 +23,6 @@ const createMemberFromProfile = (userId: string, profile: IMatrixProfile): RoomM
             return { avatar_url: profile.avatar_url };
         },
         getDirectionalContent: function () {
-            // eslint-disable-next-line
             return this.getContent();
         },
     } as MatrixEvent;
@@ -121,7 +120,7 @@ export const usePermalinkMember = (
             }
         };
 
-        doProfileLookup();
+        void doProfileLookup();
     }, [context, member, shouldLookUpUser, targetRoom, userId]);
 
     return member;

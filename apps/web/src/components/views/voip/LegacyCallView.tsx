@@ -47,7 +47,7 @@ interface IProps {
     pipMode?: boolean;
 
     // Used for dragging the PiP LegacyCallView
-    onMouseDownOnHeader?: (event: React.MouseEvent<Element, MouseEvent>) => void;
+    onMouseDownOnHeader?: (event: React.MouseEvent) => void;
 
     showApps?: boolean;
 
@@ -73,11 +73,11 @@ function getFullScreenElement(): Element | null {
 }
 
 function requestFullscreen(element: Element): void {
-    element.requestFullscreen();
+    void element.requestFullscreen();
 }
 
 function exitFullscreen(): void {
-    document.exitFullscreen();
+    void document.exitFullscreen();
 }
 
 export default class LegacyCallView extends React.Component<IProps, IState> {
@@ -295,14 +295,14 @@ export default class LegacyCallView extends React.Component<IProps, IState> {
         const callAction = getKeyBindingsManager().getCallAction(ev);
         switch (callAction) {
             case KeyBindingAction.ToggleMicInCall:
-                this.onMicMuteClick();
+                void this.onMicMuteClick();
                 // show the controls to give feedback
                 this.buttonsRef.current?.showControls();
                 handled = true;
                 break;
 
             case KeyBindingAction.ToggleWebcamInCall:
-                this.onVidMuteClick();
+                void this.onVidMuteClick();
                 // show the controls to give feedback
                 this.buttonsRef.current?.showControls();
                 handled = true;
@@ -331,7 +331,7 @@ export default class LegacyCallView extends React.Component<IProps, IState> {
 
     private onTransferClick = (): void => {
         const transfereeCall = this.context.legacyCallHandler.getTransfereeForCallId(this.props.call.callId);
-        if (transfereeCall) this.props.call.transferToCall(transfereeCall);
+        if (transfereeCall) void this.props.call.transferToCall(transfereeCall);
     };
 
     private onHangupClick = (): void => {
@@ -535,7 +535,7 @@ export default class LegacyCallView extends React.Component<IProps, IState> {
             return (
                 <div className="mx_LegacyCallView_content" onMouseMove={this.onMouseMove}>
                     <VideoFeed
-                        feed={primaryFeed as CallFeed}
+                        feed={primaryFeed!}
                         call={call}
                         pipMode={pipMode}
                         onResize={onResize}
@@ -548,7 +548,7 @@ export default class LegacyCallView extends React.Component<IProps, IState> {
             return (
                 <div className="mx_LegacyCallView_content" onMouseMove={this.onMouseMove}>
                     <VideoFeed
-                        feed={primaryFeed as CallFeed}
+                        feed={primaryFeed!}
                         call={call}
                         pipMode={pipMode}
                         onResize={onResize}
@@ -562,7 +562,7 @@ export default class LegacyCallView extends React.Component<IProps, IState> {
             return (
                 <div className="mx_LegacyCallView_content" onMouseMove={this.onMouseMove}>
                     <VideoFeed
-                        feed={primaryFeed as CallFeed}
+                        feed={primaryFeed!}
                         call={call}
                         pipMode={pipMode}
                         onResize={onResize}

@@ -257,7 +257,7 @@ See `BUILDING.md` at the repo root.
   --config.confirmModulesPurge=false`. **Re-apply this removal after any
   upstream merge that restores the block**, then regenerate the lockfile
   (`sed -i '1,199d' pnpm-lock.yaml` to drop the stale first doc, then
-  `corepack pnpm@11.5.2 install`).
+  `corepack pnpm@11.23.0 install`).
 - **`module-api`'s vite build can't resolve `@typescript/old` under strict
   pnpm.** Since the TS-6 sync, `packages/module-api/vite.config.ts` does
   `require.resolve("@typescript/old")` (to point api-extractor at TS 6.0.3).
@@ -271,7 +271,7 @@ See `BUILDING.md` at the repo root.
   not the alias). **Fix applied in this fork:** `"@typescript/old":
   "npm:typescript@6.0.3"` in root `devDependencies`, which links
   `node_modules/@typescript/old` at the root where module-api resolves it. A
-  full reinstall (`rm -rf node_modules && corepack pnpm@11.5.2 install`) is
+  full reinstall (`rm -rf node_modules && corepack pnpm@11.23.0 install`) is
   needed after adding it — incremental installs report "Already up to date" and
   skip re-hoisting. **Re-apply after any upstream merge** if the webpack build
   regresses with this error.
@@ -333,7 +333,7 @@ git merge upstream/develop  # or rebase — same effect, fork is fast-forward-on
 git push
 ```
 
-Upstream is on **pnpm 11.5.2** (object-form `devEngines.packageManager`, no
+Upstream is on **pnpm 11.23.0** (object-form `devEngines.packageManager`, no
 corepack `packageManager` string). The fork never touches dependency files
 *except* the three build-tooling fixes below, so a merge otherwise takes
 upstream's `package.json` / `pnpm-lock.yaml` wholesale. After merging:
@@ -343,18 +343,21 @@ upstream's `package.json` / `pnpm-lock.yaml` wholesale. After merging:
 3. re-add `lib/*.cjs` / `lib/*.d.cts` to `apps/desktop/project.json` build:ts
    outputs;
 then regenerate a single-document lockfile (see the pnpm-11/nx gotcha) and
-`corepack pnpm@11.5.2 install --config.confirmModulesPurge=false`.
+`corepack pnpm@11.23.0 install --config.confirmModulesPurge=false`.
 
-Last full sync: **2026-07-16**, merging up to upstream `7ad619e693` (630
-commits from merge-base `afc4e52df4`; no code lost). See `sync-report.md` for
-the full record. This was a **major toolchain sync**: Electron 42→**43.1.0**,
-nx 22.7.5→**23.0.2**, pnpm 11.2.2→**11.5.2**, TypeScript moved to the **TS 6 /
-`@typescript/native` split**; test runner **jest→vitest** (co-located
-`src/**/*.test.{ts,tsx}`); lint/format **eslint+prettier→oxlint+oxfmt** (+`knip`).
-Upstream still pins a `matrix-js-sdk#develop` snapshot whose TS-6.0 source
-leaves **3 baseline `lint:types` errors, all inside the SDK**
-(`MSC4108SignInWithQR.ts`) — none in fork/app code; the webpack build stays
-green because it transpiles rather than type-checks.
+Last full sync: **2026-09-07**, merging up to upstream `9a536a3419` (374
+commits from merge-base `7ad619e693`; no code lost). See `sync-report.md` for
+the full record. Notable bumps: Electron 43.1.0→**44.0.0** (escape hatch
+re-verified on `44-x-y`), pnpm 11.5.2→**11.23.0**, nx 23.0.2→**23.1.2**,
+TypeScript catalog →**7.0.2**; oxlint gained `no-floating-promises`; the
+upstream tests the fork edits are now co-located vitest files. Upstream still
+pins a `matrix-js-sdk#develop` snapshot that leaves **7 baseline `lint:types`
+errors, all inside the SDK** (`embedded.ts`, `MSC4108SignInWithQR.ts`) — none
+in fork/app code; the webpack build stays green because it transpiles rather
+than type-checks.
+
+Previous sync: **2026-07-16** (`7ad619e693`) — the major toolchain sync
+(Electron 42→43, jest→vitest, eslint+prettier→oxlint+oxfmt, TS 6 split).
 
 Likely conflict sites if upstream churns:
 - `package.json` (root) — the removed `devEngines.packageManager` block and the added `@typescript/old` alias; a merge that re-adds the block re-introduces the two-document lockfile (breaks nx) and dropping the alias breaks the module-api/webpack build. Both must be re-applied.
@@ -366,6 +369,9 @@ Likely conflict sites if upstream churns:
 - `apps/web/src/stores/widgets/ElementWidgetActions.ts` — `MuteRemoteAudio` enum entry; conflicts if upstream adds adjacent values.
 - `apps/web/src/models/Call.ts` — `CallEvent` enum gained `AudioMuteState` and `ElementCall` gained mute state + methods around `onDeviceMute` / `onJoin`. Conflicts likely if upstream rewrites either.
 - `apps/web/src/components/views/voip/CallView.tsx` — small render-tree addition for the indicator.
+- `knip.ts` (root) — the fork removes `@typescript/old` from `ignoreDependencies` because the alias is a real root devDependency here; if upstream edits that list it conflicts. Re-check `pnpm lint:knip` after every merge — it also flags any fork export that nothing imports.
+- `apps/web/res/css/views/settings/tabs/user/_KeyboardUserSettingsTab.pcss` — upstream's stub is tiny and tracks Compound token renames (the 2026-09 sync removed every `$spacing-*` variable); use `var(--cpd-space-*)` only.
+- `apps/web/src/components/views/voip/{LegacyCallView,VideoFeed}.test.tsx` and `apps/web/src/components/views/elements/DesktopCapturerSourcePicker.test.tsx` — co-located upstream tests carrying small fork edits (`isSpeaking` mocks, `offerAudio` cases); every new upstream feed mock needs `isSpeaking` added or `VideoFeed`'s constructor throws.
 
 ## Tests
 
@@ -384,20 +390,26 @@ sync. Vitest **only** collects `src/**/*.test.{ts,tsx}` — a test left at the
 old `test/unit-tests/*-test.ts` path is silently not run. (Upstream is
 mid-migration: ~486 of its own tests are still at the old path and dormant.)
 
-The upstream `KeyboardShortcutUtils` / `KeyboardShortcut` / `KeyboardUserSettingsTab`
-tests are unmodified-upstream and still at `test/unit-tests/` (dormant upstream
-too); they are not fork tests and were intentionally left for upstream to
-migrate. The `KeyboardUserSettingsTab` snapshot passes because `window.electron`
-is undefined in the test env — the desktop-only Global toggle is hidden.
+Upstream finished migrating the tests the fork touches (2026-09 sync); they now
+live co-located under `src/`: `KeyboardShortcutUtils.test.ts`,
+`KeyboardShortcut.test.tsx`, `KeyboardUserSettingsTab.test.tsx` (+ snapshot),
+`DesktopCapturerSourcePicker.test.tsx`, `LegacyCallView.test.tsx`,
+`VideoFeed.test.tsx`, `ElectronPlatform.test.ts`, `Call.test.ts`. The fork's
+edits inside them are small (`isSpeaking` feed mocks, the `offerAudio` /
+`shareAudio` picker cases, the IPC payload shape). Run them together after a
+sync — 10 files, 169 tests as of 2026-09-07. The `KeyboardUserSettingsTab`
+snapshot passes because `window.electron` is undefined in the test env — the
+desktop-only Global toggle is hidden.
 
 ## Lint pipeline
 
 Upstream migrated eslint→**oxlint** and prettier→**oxfmt** (2026-07 sync).
 
 ```bash
-pnpm -r --workspace-concurrency=1 lint:types   # nx tsc (TS 6) across web + desktop + packages
-pnpm exec oxlint      # lint:js — replaces eslint
-pnpm exec stylelint "apps/web/res/css/**/*.pcss"   # lint:style
+pnpm -r --workspace-concurrency=1 lint:types   # nx tsc across web + desktop + packages
+pnpm exec oxlint      # lint:js — replaces eslint (root script also runs nx lint:prepare first)
+pnpm -C apps/web lint:style   # stylelint lives in apps/web now, not the root
+pnpm lint:knip        # unused exports / deps — fork exports nothing imports will fail this
 pnpm exec oxfmt --check   # lint:fmt — replaces prettier
 ```
 
@@ -405,8 +417,8 @@ The root `lint` script chains `lint:types` + `lint:fmt` + `lint:js` +
 `lint:style` + `lint:workflows` + `lint:knip`. `pnpm i18n` (runs
 `matrix-i18n-lint`) must also pass after any new `_t()` / `_td()` strings.
 
-> **`pnpm -r lint:types` reports 3 baseline errors, all inside the pinned
-> `matrix-js-sdk#develop` source** (`MSC4108SignInWithQR.ts`) — none in fork or
+> **`pnpm -r lint:types` reports 7 baseline errors, all inside the pinned
+> `matrix-js-sdk#develop` source** (`embedded.ts`, `MSC4108SignInWithQR.ts`) — none in fork or
 > app code. The nx task exits non-zero purely because of them; verify with a raw
 > `pnpm exec tsc --noEmit` in `apps/web` and grep out `matrix-js-sdk` to confirm
 > 0 fork/app errors. The webpack build stays green (transpiles, not type-checks).

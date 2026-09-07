@@ -30,7 +30,7 @@ import {
 import RoomAvatar from "../avatars/RoomAvatar";
 import { type SpaceKey } from "../../../stores/spaces";
 import SpaceTreeLevelLayoutStore from "../../../stores/spaces/SpaceTreeLevelLayoutStore";
-import NotificationBadge from "../rooms/NotificationBadge";
+import { NotificationBadge } from "../rooms/NotificationBadge/NotificationBadge";
 import { _t } from "../../../languageHandler";
 import defaultDispatcher from "../../../dispatcher/dispatcher";
 import { Action } from "../../../dispatcher/actions";
@@ -118,7 +118,8 @@ export const SpaceButton = <T extends keyof HTMLElementTagNameMap>({
                 <NotificationBadge
                     onClick={jumpToNotification}
                     notification={notificationState}
-                    aria-label={ariaLabel}
+                    className="mx_SpacePanel_notificationBadge"
+                    ariaLabel={ariaLabel}
                     tabIndex={tabIndex}
                     showUnsentTooltip={true}
                 />
@@ -313,7 +314,6 @@ export class SpaceItem extends React.PureComponent<IItemProps, IItemState> {
     };
 
     public render(): React.ReactNode {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const {
             space,
             activeSpaces,
@@ -366,7 +366,6 @@ export class SpaceItem extends React.PureComponent<IItemProps, IItemState> {
             </AccessibleButton>
         ) : null;
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { tabIndex, ...restDragHandleProps } = dragHandleProps || {};
         const selected = activeSpaces.includes(space.roomId);
 

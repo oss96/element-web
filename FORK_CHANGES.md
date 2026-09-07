@@ -210,7 +210,7 @@ legacy 1:1 or an Element Call group session.
 
 | File | Role |
 |---|---|
-| `apps/web/src/accessibility/KeyboardShortcutsCustomization.ts` | Store + capture helpers: `getUserShortcutOverrides`, `set/clearUserShortcutOverride`, `setUserShortcutCleared`, `isComboCleared`, `clearAllUserShortcutOverrides`, `get/setShortcutGlobal`, `getGlobalShortcutActions`, `isShortcutGlobal`, `captureCombo`, `comboCanBeGlobal`, `toElectronAccelerator`, `combosEqual`, `findConflicts`, `dispatchSyntheticKeyEvent`. |
+| `apps/web/src/accessibility/KeyboardShortcutsCustomization.ts` | Store + capture helpers: `getUserShortcutOverrides`, `set/clearUserShortcutOverride`, `setUserShortcutCleared`, `isComboCleared`, `clearAllUserShortcutOverrides`, `get/setShortcutGlobal`, `getGlobalShortcutActions`, `captureCombo`, `comboCanBeGlobal`, `toElectronAccelerator`, `combosEqual`, `findConflicts`, `dispatchSyntheticKeyEvent`. |
 | `apps/web/src/accessibility/GlobalShortcutsBridge.ts` | Renderer half of the desktop bridge. `startGlobalShortcutsBridge()` is called from `init.tsx::preparePlatform`. Sends `setGlobalShortcuts` IPC on settings change; reacts to `globalShortcutFired` by dispatching a synthetic `KeyboardEvent` at `document`. |
 | `apps/web/src/components/views/settings/KeyboardShortcutEditor.tsx` | Row component. Listens at `document` capture phase while recording; renders the edit trigger, Make-global toggle, Clear (`✕`), Reset (`↺`), and conflict warning. |
 | `apps/web/src/audio/CallMuteTones.ts` | `playMicToggleTone` / `playIncomingAudioToggleTone` — Web Audio sine blips. Shared `AudioContext`, resumed inside the user-gesture handler. |
@@ -319,28 +319,29 @@ legacy 1:1 or an Element Call group session.
 
 ### Tests
 
-> **2026-07 vitest migration.** Upstream moved from jest to vitest; tests are
-> now collected only as `src/**/*.test.{ts,tsx}`. The fork's own suite was
-> migrated to that layout (see below). Other tests listed here that still sit
-> under `test/unit-tests/*-test.ts` are **unmodified upstream** files, dormant
-> under the new collection until upstream migrates them — they are not fork
-> tests. Only `KeyboardShortcutsCustomization.test.ts` is fork-authored.
+> **Vitest layout.** Tests are collected only as `src/**/*.test.{ts,tsx}`
+> (2026-07 migration). As of the 2026-09 sync every upstream test the fork
+> edits has been moved by upstream to that co-located layout and converted to
+> `vi.*`; the fork's edits rode along via git rename detection. Only
+> `KeyboardShortcutsCustomization.test.ts` is fork-authored.
 
 - `apps/web/src/accessibility/KeyboardShortcutsCustomization.test.ts`
   — fork suite for the pure helpers (31 cases). Migrated from the old
   `test/unit-tests/…-test.ts` jest path to co-located vitest during the
   2026-07 sync (`import { describe, it, expect } from "vitest"`).
-- `apps/web/test/unit-tests/components/views/elements/DesktopCapturerSourcePicker-test.tsx`
-  — covers `offerAudio`, the window-tab byline, and the
-  `{ source, shareAudio }` return shape.
-- `apps/web/test/unit-tests/components/views/voip/VideoFeed-test.tsx`
-  — covers the speaking-indicator branch.
-- `apps/web/test/unit-tests/components/views/voip/LegacyCallView-test.tsx`
-  — covers `ToggleIncomingAudioInCall` keydown handling.
-- `apps/web/test/unit-tests/vector/platform/ElectronPlatform-test.ts` —
-  covers the new IPC payload shape.
-- `apps/web/test/unit-tests/components/views/settings/tabs/user/__snapshots__/KeyboardUserSettingsTab-test.tsx.snap`
-  — large snapshot churn for the editable rows.
+- `apps/web/src/components/views/elements/DesktopCapturerSourcePicker.test.tsx`
+  — adds cases for `offerAudio`, the window-tab byline, `allowWindowAudio`,
+  and the `{ source, shareAudio }` return shape.
+- `apps/web/src/components/views/voip/VideoFeed.test.tsx`
+  — feed mock gains `isSpeaking` (the fork's constructor reads it).
+- `apps/web/src/components/views/voip/LegacyCallView.test.tsx`
+  — every feed mock gains `isSpeaking`; upstream adds mocks without it, so
+  each new upstream test here needs the line added or `VideoFeed` throws.
+- `apps/web/src/vector/platform/ElectronPlatform.test.ts` —
+  covers the new IPC payload shape (`audioRequested`, `offerAudio`, the
+  third `callDisplayMediaCallback` argument).
+- `apps/web/src/components/views/settings/tabs/user/__snapshots__/KeyboardUserSettingsTab.test.tsx.snap`
+  — snapshot of the editable rows (upstream's file, regenerated as needed).
 
 ### Build tooling
 
@@ -351,7 +352,7 @@ legacy 1:1 or an Element Call group session.
   (`expected a single document in the stream, but found more`), which breaks
   every nx-driven script (`nx build`, `pnpm -r lint:types`, `nx start`).
   Removing the block makes pnpm write a single-document lockfile. The real
-  document is dropped. Install with `corepack pnpm@11.5.2 install`. This is a
+  document is dropped. Install with `corepack pnpm@11.23.0 install`. This is a
   build-tooling workaround, not a feature — re-apply after any upstream merge
   that restores the block (see CLAUDE.md, pnpm-11/nx gotcha).
 - `package.json` (root) — adds `"@typescript/old": "npm:typescript@6.0.3"` to
@@ -363,6 +364,10 @@ legacy 1:1 or an Element Call group session.
   merge (see CLAUDE.md, `@typescript/old` gotcha).
 - `apps/desktop/project.json` — adds `lib/*.cjs` / `lib/*.d.cts` to `build:ts`
   outputs so cache replay keeps `preload.cjs`. Re-apply if upstream reverts it.
+- `knip.ts` (root) — removes `@typescript/old` from `ignoreDependencies`.
+  Upstream ignores it because upstream never lists it; the fork declares it as
+  a real root devDependency, and knip (`--strict`) refuses an ignore entry for
+  a listed dependency. Re-apply if upstream re-adds the entry.
 
 ---
 
@@ -485,6 +490,14 @@ Likely friction points when merging `upstream/develop`:
   either.
 - `apps/web/src/components/views/voip/CallView.tsx` — small render-tree
   addition for the indicator.
+- `knip.ts` (root) — the `ignoreDependencies` list; see Build tooling.
+- `apps/web/res/css/views/settings/tabs/user/_KeyboardUserSettingsTab.pcss`
+  — upstream's stub tracks Compound token renames (`$spacing-*` was removed
+  in 2026-09); the fork's rules must use `var(--cpd-space-*)`.
+- `apps/web/src/components/views/voip/{LegacyCallView,VideoFeed}.test.tsx`,
+  `apps/web/src/components/views/elements/DesktopCapturerSourcePicker.test.tsx`
+  — co-located upstream tests with small fork edits; new upstream feed mocks
+  need `isSpeaking`.
 
 See `CLAUDE.md` for the upstream-sync command sequence and for repo
 gotchas (`pnpm i18n` line-ending churn, `_components.pcss` CRLF noise,

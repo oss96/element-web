@@ -88,7 +88,7 @@ export default class VideoFeed extends React.PureComponent<IProps, IState> {
         this.updateMicSource(VideoFeed.getActiveMicSource(prevProps), VideoFeed.getActiveMicSource(this.props));
         // If the mutes state has changed, we try to playMedia()
         if (prevState.videoMuted !== this.state.videoMuted || prevProps.feed.stream !== this.props.feed.stream) {
-            this.playMedia();
+            void this.playMedia();
         }
     }
 
@@ -127,7 +127,7 @@ export default class VideoFeed extends React.PureComponent<IProps, IState> {
         if (newFeed) {
             newFeed.addListener(CallFeedEvent.NewStream, this.onNewStream);
             newFeed.addListener(CallFeedEvent.MuteStateChanged, this.onFeedMuteStateChanged);
-            this.playMedia();
+            void this.playMedia();
         }
     }
 
@@ -201,7 +201,7 @@ export default class VideoFeed extends React.PureComponent<IProps, IState> {
             audioMuted: micSource.isAudioMuted(),
             videoMuted: this.props.feed.isVideoMuted(),
         });
-        this.playMedia();
+        void this.playMedia();
     };
 
     private onFeedMuteStateChanged = (): void => {

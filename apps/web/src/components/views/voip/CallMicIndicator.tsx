@@ -125,5 +125,3 @@ export const CallMicIndicator: FC<Props> = ({ call, containerRef }) => {
         document.body,
     );
 };
-
-export default CallMicIndicator;
