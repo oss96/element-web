@@ -15,6 +15,11 @@ for windows on Windows), a primary-tile mic indicator following the local
 feed in 1:1, and (newly) widget-API mic toggle + host-side mic indicator
 for group calls.
 
+Upstream ships its own general-purpose agent guide (repo layout, commands,
+code style) as `AGENTS.md`; the fork keeps that verbatim as
+[`AGENTS.upstream.md`](./AGENTS.upstream.md) so `AGENTS.md` can stay the
+fork-specific brief (a copy of this file). Read both.
+
 ## Keeping these docs current
 
 When you change anything fork-specific — new feature, behaviour change on
@@ -89,6 +94,23 @@ isn't reflected here is invisible to the next session.
 - `apps/web/src/accessibility/KeyboardShortcutsCustomization.test.ts`
   Unit tests for the pure helpers (31 cases). Co-located vitest test
   (migrated from the old `test/unit-tests` jest path in the 2026-07 sync).
+- `.github/workflows/fork-release.yml`
+  Fork-only CI + release pipeline. Upstream's desktop workflows hard-code
+  `repository: element-hq/element-web` and need Element's signing secrets, so
+  on this fork they build upstream code or fail. This one builds *this* repo:
+  `verify` (fork-relevant web vitest files + desktop `lint:types` + desktop
+  vitest), `web` (webpack build → `element-web-<version>.tar.gz`), `windows`
+  (BUILDING.md recipe on `windows-2025`: `build:ts`/`build:res`, asar-pack the
+  webapp with `apps/desktop/element.io/release/config.json`, unsigned
+  `electron-builder --win squirrel --x64`, then asserts `lib/preload.cjs` is
+  inside `app.asar`), and `release` (only for a pushed `v*-fork.*` tag, a
+  manual dispatch with a tag, or a branch push whose commit message contains
+  `[release:<tag>]` — the last creates a *draft* release targeting that
+  commit, for sessions whose git proxy cannot push tags). Release notes come from
+  `release-notes/<tag>.md` at the tagged commit. Runs build-only on pushes to
+  `develop` and `claude/**`.
+- `release-notes/` — per-release notes consumed by `fork-release.yml`.
+- `AGENTS.upstream.md` — upstream's `AGENTS.md`, kept verbatim (see above).
 
 **Modified vs upstream**
 
@@ -96,7 +118,11 @@ isn't reflected here is invisible to the next session.
   `numpad` flag; `isKeyComboMatch` accepts either `ev.key` or the
   un-shifted derivation from `ev.code` via `unshiftedFromCode`. A
   numpad-flagged combo only matches presses whose `ev.code` starts with
-  `"Numpad"`; unflagged combos still match either physical key.
+  `"Numpad"`; unflagged combos still match either physical key. Since the
+  2026-09-22 sync the key comparison is always case-insensitive (upstream
+  #34478 — caps lock no longer breaks letter shortcuts) and an event without a
+  `key` (mouse `ButtonEvent`s cast to `KeyboardEvent`) never matches; the
+  empty-`key` "cleared" sentinel still short-circuits first.
 - `apps/web/src/accessibility/KeyboardShortcutUtils.ts` — `getKeyboardShortcuts()`
   merges user overrides on top of `KEYBOARD_SHORTCUTS` defaults.
 - `apps/web/src/components/views/settings/tabs/user/KeyboardUserSettingsTab.tsx`
@@ -193,7 +219,11 @@ remoteAudioMuted }`) and `CallEvent.SpeakingState` (`boolean`). On
 
 ## Build / installer
 
-See `BUILDING.md` at the repo root.
+See `BUILDING.md` at the repo root for the local recipe. CI builds and
+releases go through `.github/workflows/fork-release.yml`: push a tag like
+`v1.12.29-fork.1` (with a matching `release-notes/<tag>.md`) and it tests,
+builds the web tarball + unsigned Windows x64 Squirrel installer, and
+publishes a GitHub release with both attached plus `SHA256SUMS.txt`.
 
 ## Known limitations (deliberate scope cuts)
 
@@ -445,18 +475,27 @@ upstream's `package.json` / `pnpm-lock.yaml` wholesale. After merging:
 then regenerate a single-document lockfile (see the pnpm-11/nx gotcha) and
 `corepack pnpm@11.23.0 install --config.confirmModulesPurge=false`.
 
-Last full sync: **2026-09-07**, merging up to upstream `9a536a3419` (374
-commits from merge-base `7ad619e693`; no code lost). See `sync-report.md` for
-the full record. Notable bumps: Electron 43.1.0→**44.0.0** (escape hatch
-re-verified on `44-x-y`), pnpm 11.5.2→**11.23.0**, nx 23.0.2→**23.1.2**,
-TypeScript catalog →**7.0.2**; oxlint gained `no-floating-promises`; the
-upstream tests the fork edits are now co-located vitest files. Upstream still
+Last full sync: **2026-09-22**, merging up to upstream `c9cff69c` (138
+commits from merge-base `9a536a3419`, upstream v1.12.29 + module-api 2.2.0;
+no fork code lost). See `sync-report.md` for the full record. Notable changes:
+Electron 44.0.0→**44.3.0** (same major, escape hatch unaffected), nx
+→**23.2.1**, vite 5, compound-web 10.1.0, oxlint 1.82 / oxfmt 0.67, mermaid 12;
+upstream's own `AGENTS.md` (kept as `AGENTS.upstream.md`), case-insensitive
+key matching merged into the fork's `isKeyComboMatch`, X.509 hardware-key IPC
+(`x509.ts`), `hak` removed in favour of `@matrix-org/seshat`, window-close
+logic moved to `window-close.ts`, the last jest tests migrated to vitest.
+
+Previous sync: **2026-09-07** (`9a536a3419`, 374 commits): Electron
+43.1.0→44.0.0 (escape hatch re-verified on `44-x-y`), pnpm 11.5.2→11.23.0,
+nx 23.0.2→23.1.2, TypeScript catalog →7.0.2; oxlint gained
+`no-floating-promises`; the upstream tests the fork edits became co-located
+vitest files. Upstream still
 pins a `matrix-js-sdk#develop` snapshot that leaves **7 baseline `lint:types`
 errors, all inside the SDK** (`embedded.ts`, `MSC4108SignInWithQR.ts`) — none
 in fork/app code; the webpack build stays green because it transpiles rather
 than type-checks.
 
-Previous sync: **2026-07-16** (`7ad619e693`) — the major toolchain sync
+Earlier sync: **2026-07-16** (`7ad619e693`) — the major toolchain sync
 (Electron 42→43, jest→vitest, eslint+prettier→oxlint+oxfmt, TS 6 split).
 
 Likely conflict sites if upstream churns:
@@ -465,7 +504,10 @@ Likely conflict sites if upstream churns:
 - `apps/web/src/settings/Settings.tsx` — interface entries are alphabetically grouped; new neighbours will conflict.
 - `apps/web/src/i18n/strings/en_EN.json` — adjacent keyboard and voip keys.
 - `apps/web/src/accessibility/KeyboardShortcutUtils.ts` — small surface, low risk.
-- `apps/web/src/KeyBindingsManager.ts` — the `isKeyComboMatch` rewrite means upstream changes here will need re-applying on top.
+- `apps/web/src/KeyBindingsManager.ts` / `KeyBindingsManager.test.ts` — the `isKeyComboMatch` rewrite means upstream changes here will need re-applying on top (2026-09-22: upstream's case-insensitive rewrite was folded in; both sides' tests kept).
+- `apps/desktop/src/electron-main.ts` / `ipc.ts` import blocks — fork imports (`globalShortcuts.js`, `windowAudio.js`) sit next to upstream's side-effect imports; every upstream import addition there conflicts trivially.
+- `apps/web/src/vector/init.tsx::preparePlatform` — the fork's two `start*()` calls sit at the end of the function where upstream also appends (2026-09-22: `logAppVersion()`); keep both.
+- `AGENTS.md` — upstream now owns an `AGENTS.md`; the fork keeps its own brief there and upstream's text in `AGENTS.upstream.md`. On conflict take ours, then refresh `AGENTS.upstream.md` with `git show upstream/develop:AGENTS.md > AGENTS.upstream.md`.
 - `apps/web/src/stores/widgets/ElementWidgetActions.ts` — `MuteRemoteAudio` enum entry; conflicts if upstream adds adjacent values.
 - `apps/web/src/models/Call.ts` — `CallEvent` enum gained `AudioMuteState` and `ElementCall` gained mute state + methods around `onDeviceMute` / `onJoin`. Conflicts likely if upstream rewrites either.
 - `apps/web/src/components/views/voip/CallView.tsx` — small render-tree addition for the indicator.

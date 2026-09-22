@@ -265,6 +265,9 @@ legacy 1:1 or an Element Call group session.
 | `apps/desktop/src/windowAudio.ts`                                               | Per-application screenshare audio (Windows). `resolveAudioForSource(sourceId, shareAudio)` maps screen sources to system `"loopback"` and window sources to `{ id: "applicationLoopback:<pid>", name: "Application Audio" }` via Electron's raw-`{ id, name }` escape hatch; HWND→PID via one-shot PowerShell P/Invoke of `GetWindowThreadProcessId`.                                                                                                                                                                                                          |
 | `apps/web/res/css/views/settings/tabs/user/_KeyboardUserSettingsTab.pcss`       | Layout for the recorder, the global toggle, conflict warning, and the Reset-all row. (Was a stub upstream; rewritten here.)                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `apps/web/src/accessibility/KeyboardShortcutsCustomization.test.ts` | Unit tests for the pure helpers (31 cases; co-located vitest, migrated from the old `test/unit-tests` path in the 2026-07 sync).                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `.github/workflows/fork-release.yml` | Fork-only CI + release pipeline (upstream's desktop workflows check out `element-hq/element-web` and need Element's signing secrets). Jobs: `verify` (fork-relevant web vitest files, desktop `lint:types` + vitest), `web` (webpack build → `element-web-<version>.tar.gz`), `windows` (BUILDING.md recipe, unsigned `electron-builder --win squirrel --x64`, asserts `lib/preload.cjs` is in `app.asar`), `release` (for a pushed `v*-fork.*` tag, a manual dispatch, or a branch-push commit message containing `[release:<tag>]`, which yields a draft; notes from `release-notes/<tag>.md`). Build-only on pushes to `develop` / `claude/**`. |
+| `release-notes/<tag>.md` | Human-written notes for each fork release, picked up by `fork-release.yml`. |
+| `AGENTS.upstream.md` | Upstream's `AGENTS.md`, kept verbatim since upstream started shipping one (2026-09-22 sync); the fork's own `AGENTS.md` is the fork brief. |
 
 ---
 
@@ -275,7 +278,10 @@ legacy 1:1 or an Element Call group session.
 - `apps/web/src/KeyBindingsManager.ts` — `KeyCombo` gains optional `numpad`;
   `isKeyComboMatch` matches either `ev.key` or `unshiftedFromCode(ev.code, ev.key)`.
   Numpad-flagged combos require `ev.code.startsWith("Numpad")`. New exported
-  helper: `unshiftedFromCode`.
+  helper: `unshiftedFromCode`. Since the 2026-09-22 sync the comparison is
+  always case-insensitive (folded in from upstream #34478, caps-lock fix) and an
+  event with no `key` never matches. `KeyBindingsManager.test.ts` carries both
+  the fork's cleared-sentinel case and upstream's caps-lock / no-key cases.
 - `apps/web/src/accessibility/KeyboardShortcutUtils.ts` —
   `getKeyboardShortcuts()` merges `Keyboard.userShortcuts` over the
   `KEYBOARD_SHORTCUTS` defaults.
@@ -573,6 +579,14 @@ Likely friction points when merging `upstream/develop`:
 - `apps/web/src/components/views/voip/CallView.tsx` — small render-tree
   addition for the indicator.
 - `knip.ts` (root) — the `ignoreDependencies` list; see Build tooling.
+- `apps/desktop/src/electron-main.ts` / `ipc.ts` import blocks and
+  `apps/web/src/vector/init.tsx::preparePlatform` tail — trivial conflicts
+  whenever upstream adds imports / startup calls next to the fork's
+  (2026-09-22: `x509.js`, `clearData`, `logAppVersion`). Keep both sides.
+- `AGENTS.md` — upstream now ships one. Keep the fork brief; refresh
+  `AGENTS.upstream.md` from `upstream/develop:AGENTS.md`.
+- `.github/workflows/` — upstream's workflows are untouched; the fork only adds
+  `fork-release.yml`, so no conflicts expected there.
 - `apps/web/res/css/views/settings/tabs/user/_KeyboardUserSettingsTab.pcss`
   — upstream's stub tracks Compound token renames (`$spacing-*` was removed
   in 2026-09); the fork's rules must use `var(--cpd-space-*)`.

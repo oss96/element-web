@@ -11,7 +11,7 @@ import IpcMainEvent = Electron.IpcMainEvent;
 import { randomArray } from "./utils.js";
 import { consumeDisplayMediaCallback } from "./displayMediaCallback.js";
 import { resolveAudioForSource } from "./windowAudio.js";
-import Store, { clearDataAndRelaunch } from "./store.js";
+import Store, { clearData } from "./store.js";
 import { getConfig } from "./config.js";
 
 type SourcesOptions = Electron.SourcesOptions;
@@ -228,8 +228,9 @@ ipcMain.on("ipcCall", async function (_ev: IpcMainEvent, payload) {
         }
 
         case "clearStorage":
-            await clearDataAndRelaunch(global.mainWindow.webContents.session);
-            return; // the app is about to stop, we don't need to reply to the IPC
+            await clearData(global.mainWindow.webContents.session);
+            ret = null;
+            break;
 
         case "breadcrumbs": {
             if (process.platform === "darwin") {
@@ -251,7 +252,8 @@ ipcMain.on("ipcCall", async function (_ev: IpcMainEvent, payload) {
                             },
                         });
                         if (r.avatarUrl) {
-                            void fetch(r.avatarUrl)
+                            void global.mainWindow?.webContents.session
+                                .fetch(r.avatarUrl)
                                 .then((resp) => {
                                     if (!resp.ok) return;
                                     return resp.arrayBuffer();

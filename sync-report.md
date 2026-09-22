@@ -216,3 +216,83 @@ was stashed before the merge and restored afterwards.
 - The 7 SDK baseline `lint:types` errors persist until upstream realigns its
   `matrix-js-sdk#develop` pin.
 - `oxfmt` still unverifiable locally (CRLF); rely on CI.
+
+## 2026-09-22 — sync develop to upstream `c9cff69c`
+
+**Range merged:** merge-base `9a536a3419` → upstream/develop `c9cff69c9c`
+(`Prepare module-api 2.2.0 release`, #35141). 138 upstream commits, including
+upstream releases **v1.12.28** and **v1.12.29**. Pre-merge fork tip:
+`3df8839c` (abort target). Merged on `claude/fork-sync-release-4p5y9v`.
+
+### Notable upstream changes
+
+- Electron 44.0.0 → **44.3.0** (same major; the `applicationLoopback` escape
+  hatch was re-verified on `44-x-y` last sync), nx → 23.2.1, vite 5,
+  compound-web 10.1.0, oxlint 1.82 / oxfmt 0.67, mermaid 12, Node 24.21.
+- **Keyboard shortcuts match case-insensitively** (#34478) so caps lock no
+  longer breaks them — touches the fork's `isKeyComboMatch`.
+- Room-list resizer shortcuts listed in Keyboard settings (#35130) — new
+  UI-only entries (`ToggleRoomListPanel`, `Shrink/Grow/Collapse/ExpandRoomListPanel`)
+  in NAVIGATION.
+- Desktop: X.509 hardware-key identity verification IPC (`x509.ts`, preload
+  `x509` API; module-api 2.1/2.2), `hak` removed in favour of the
+  `@matrix-org/seshat` package, window-close logic extracted to
+  `window-close.ts` (macOS ⌘W now hides), Wayland app-id, clearing data no
+  longer restarts the app, keychain-denied crash fix, app version logged at
+  startup.
+- Web: user status enabled by default (plus length limits), unified media
+  previews, bundled URL previews in E2EE rooms, PDF viewer (labs), new
+  timeline panel (labs), `M_INVITE_BLOCKED` handling, legacy Module &
+  Customisation API removed, remaining jest tests migrated to vitest,
+  upstream `AGENTS.md` added.
+
+### Conflicts and resolutions
+
+| File | Resolution |
+| --- | --- |
+| `apps/web/src/KeyBindingsManager.ts` | **Merged both.** Kept the fork's cleared-sentinel (`key === ""`), numpad gate and `unshiftedFromCode` physical-key match; adopted upstream's always-case-insensitive comparison and the "event without `key` never matches" guard. |
+| `apps/web/src/KeyBindingsManager.test.ts` | Kept both sides' new tests (fork cleared-sentinel + upstream caps-lock / no-collision / no-key). |
+| `apps/desktop/project.json` | Kept the fork's `lib/*.cjs` / `lib/*.d.cts` build:ts outputs (mandatory fixup). |
+| `apps/desktop/src/electron-main.ts` | Kept both imports (`x509.js` + `globalShortcuts.js`). |
+| `apps/desktop/src/ipc.ts` | Kept `windowAudio.js` import; took upstream's `clearData` (replaces `clearDataAndRelaunch`). |
+| `apps/web/src/vector/init.tsx` | Kept the fork's `startGlobalShortcutsBridge()` / `startElementCallShortcuts()` and upstream's `logAppVersion()`. |
+| `AGENTS.md` (add/add) | Kept the fork brief; upstream's text saved verbatim to `AGENTS.upstream.md`. AGENTS.md/GEMINI.md regenerated from CLAUDE.md (they had drifted since 2026-07). |
+
+### Mandatory fixups
+
+1. `devEngines.packageManager` — still stripped (merge kept the fork's
+   `package.json` side); merged `pnpm-lock.yaml` is single-document and
+   `pnpm install` reports "Lockfile is up to date".
+2. `@typescript/old` root devDependency — still present.
+3. `apps/desktop/project.json` build:ts outputs — kept (conflict resolved to fork side).
+4. Electron: minor bump only (44.0 → 44.3) — escape hatch not re-checked.
+5. `isKeyComboMatch` — re-applied (see above).
+6. No i18n / `_components.pcss` noise (no `pnpm i18n` run).
+
+### Semantic-risk review
+
+- New room-list resizer shortcuts are UI-only (`getUIOnlyShortcuts`), so the
+  fork's settings tab renders them read-only (editable set = keys of
+  `getKeyboardShortcuts()`); no rebinding of shortcuts that
+  react-resizable-panels handles internally.
+- Window close handling moved to `window-close.ts`; the fork never modified
+  it, so the fork's "no tray persistence" note is unchanged.
+- Preload whitelist still contains `setGlobalShortcuts` / `globalShortcutFired`
+  next to upstream's new `x509` API.
+- Feature-survival grep: `getUserShortcutOverrides`, `resolveAudioForSource`,
+  `startElementCallShortcuts`, `CallMicIndicator`, `ToggleIncomingAudioInCall`,
+  `MuteRemoteAudio`, `DeviceMuteState`, `windowAudioSupported`,
+  `unshiftedFromCode` all present and wired.
+
+### Verification
+
+The session sandbox could not install dependencies (GitHub tarball deps such
+as the `matrix-js-sdk#develop` pin are blocked by its egress proxy), so
+verification ran in GitHub Actions through the new
+`.github/workflows/fork-release.yml` (fork-relevant vitest files, desktop
+`lint:types` + vitest, webpack build, Windows Squirrel build with a
+`preload.cjs`-in-asar check). Results: see the workflow runs for the merge
+commit and the `v1.12.29-fork.1` release.
+
+Desktop-only runtime behaviour (global hotkeys, per-app screenshare audio,
+picker) still needs a manual smoke test on the installed Windows build.

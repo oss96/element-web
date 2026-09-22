@@ -1,0 +1,258 @@
+# Fork-only workflow (oss96/element-web): verify, build and release this fork.
+#
+# Upstream's desktop workflows check out `element-hq/element-web` explicitly and
+# depend on Element's signing secrets, so on this fork they build upstream code
+# (or fail). This workflow builds *this* repository instead:
+#
+#   verify   -> fork-relevant unit tests + desktop type-check      (every trigger)
+#   web      -> webpack build of apps/web, packed as a tarball    (every trigger)
+#   windows  -> unsigned Squirrel installer for Windows x64       (every trigger)
+#   release  -> GitHub release with the artefacts attached        (tag, dispatch or `[release:<tag>]` commit)
+#
+# Release, any of:
+#   - push a tag matching `v*-fork.*` (e.g. `v1.12.29-fork.1`);
+#   - run the workflow manually with a tag name;
+#   - push a commit to `develop` / `claude/**` whose message contains
+#     `[release:<tag>]` (for pushers that cannot create tags). The release is
+#     created as a draft targeting that commit; publishing it creates the tag.
+# Notes are taken from `release-notes/<tag>.md` when that file exists.
+name: Fork release
+on:
+    push:
+        tags: ["v*-fork.*"]
+        branches: [develop, "claude/**"]
+    workflow_dispatch:
+        inputs:
+            tag:
+                description: "Release tag to create (e.g. v1.12.29-fork.1). Leave empty to only build."
+                type: string
+                required: false
+            draft:
+                description: "Create the release as a draft"
+                type: boolean
+                default: true
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+permissions:
+    contents: read
+env:
+    NX_DAEMON: "false"
+    NX_DEFAULT_OUTPUT_STYLE: stream-without-prefixes
+    PNPM_VERSION: "11.23.0"
+jobs:
+    meta:
+        name: Resolve version
+        runs-on: ubuntu-24.04
+        outputs:
+            tag: ${{ steps.v.outputs.tag }}
+            version: ${{ steps.v.outputs.version }}
+            release: ${{ steps.v.outputs.release }}
+        steps:
+            - id: v
+              env:
+                  INPUT_TAG: ${{ inputs.tag }}
+                  COMMIT_MSG: ${{ github.event.head_commit.message }}
+                  REF_TYPE: ${{ github.ref_type }}
+                  REF_NAME: ${{ github.ref_name }}
+                  SHA: ${{ github.sha }}
+              run: |
+                  if [ "$REF_TYPE" = "tag" ]; then
+                      TAG="$REF_NAME"
+                  elif [ -n "$INPUT_TAG" ]; then
+                      TAG="$INPUT_TAG"
+                  else
+                      TAG=$(printf '%s' "$COMMIT_MSG" | grep -oE '\[release:v[0-9A-Za-z.+-]+\]' | head -n1 | sed -E 's/^\[release:(.*)\]$/\1/' || true)
+                  fi
+                  if [ -n "$TAG" ]; then
+                      echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+                      echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+                      echo "release=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "tag=" >> "$GITHUB_OUTPUT"
+                      echo "version=fork-${SHA::10}" >> "$GITHUB_OUTPUT"
+                      echo "release=false" >> "$GITHUB_OUTPUT"
+                  fi
+
+    verify:
+        name: Verify (fork tests + desktop types)
+        runs-on: ubuntu-24.04
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+              with:
+                  persist-credentials: false
+            - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+              with:
+                  version: ${{ env.PNPM_VERSION }}
+            - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+              with:
+                  node-version-file: .node-version
+                  cache: pnpm
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile --config.confirmModulesPurge=false
+            - name: Prepare web unit tests
+              run: pnpm exec nx run element-web:test:unit:prepare
+            - name: Web unit tests touched by the fork
+              working-directory: apps/web
+              run: >
+                  pnpm exec vitest run
+                  src/accessibility/KeyboardShortcutsCustomization.test.ts
+                  src/accessibility/KeyboardShortcutUtils.test.ts
+                  src/KeyBindingsManager.test.ts
+                  src/components/views/settings/KeyboardShortcut.test.tsx
+                  src/components/views/settings/tabs/user/KeyboardUserSettingsTab.test.tsx
+                  src/components/views/elements/DesktopCapturerSourcePicker.test.tsx
+                  src/components/views/voip/LegacyCallView.test.tsx
+                  src/components/views/voip/VideoFeed.test.tsx
+                  src/vector/platform/ElectronPlatform.test.ts
+                  src/vector/init.test.ts
+                  src/models/Call.test.ts
+            - name: Desktop type-check
+              working-directory: apps/desktop
+              run: pnpm run lint:types
+            - name: Desktop unit tests
+              working-directory: apps/desktop
+              run: pnpm exec vitest run
+
+    web:
+        name: Build web
+        needs: meta
+        runs-on: ubuntu-24.04
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+              with:
+                  persist-credentials: false
+            - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+              with:
+                  version: ${{ env.PNPM_VERSION }}
+            - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+              with:
+                  node-version-file: .node-version
+                  cache: pnpm
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile --config.confirmModulesPurge=false
+            - name: Build
+              env:
+                  VERSION: ${{ needs.meta.outputs.version }}
+              run: |
+                  rm -rf apps/web/webapp
+                  pnpm --filter element-web build
+            - name: Package tarball
+              env:
+                  VERSION: ${{ needs.meta.outputs.version }}
+              run: |
+                  mkdir -p dist
+                  cp -r apps/web/webapp "element-web-${VERSION}"
+                  tar -czf "dist/element-web-${VERSION}.tar.gz" "element-web-${VERSION}"
+            - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+              with:
+                  name: webapp
+                  path: apps/web/webapp
+                  retention-days: 7
+            - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+              with:
+                  name: web-tarball
+                  path: dist/*.tar.gz
+                  retention-days: 7
+
+    windows:
+        name: Build Windows x64 installer
+        needs: [meta, web]
+        runs-on: windows-2025
+        defaults:
+            run:
+                shell: bash
+        steps:
+            # nx is unhappy with CRLF checkouts, see upstream's build_desktop_windows.yaml
+            - name: Configure git line endings
+              run: |
+                  git config --system core.autocrlf false
+                  git config --system core.eol lf
+                  git config --system core.longpaths true
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+              with:
+                  persist-credentials: false
+            - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+              with:
+                  version: ${{ env.PNPM_VERSION }}
+            - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+              with:
+                  node-version-file: .node-version
+            - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+              with:
+                  name: webapp
+                  path: apps/web/webapp
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile --config.confirmModulesPurge=false
+            # Same recipe as BUILDING.md: desktop TS + resources, asar-pack the web
+            # bundle (with Element's release config.json), then Squirrel only.
+            - name: Build installer
+              working-directory: apps/desktop
+              env:
+                  VERSION: ${{ needs.meta.outputs.release == 'true' && needs.meta.outputs.version || '' }}
+              run: |
+                  cp element.io/release/config.json ../web/webapp/config.json
+                  pnpm exec nx build:ts element-desktop
+                  pnpm exec nx build:res element-desktop
+                  test -f lib/preload.cjs || { echo "lib/preload.cjs missing"; exit 1; }
+                  pnpm exec asar pack ../web/webapp ./webapp.asar
+                  pnpm exec electron-builder --win squirrel --x64 --publish never
+            - name: Sanity-check the packed app
+              working-directory: apps/desktop
+              run: |
+                  pnpm exec asar list dist/win-unpacked/resources/app.asar | grep -E "lib[/\\\\]preload\.cjs"
+                  ls -la dist/squirrel-windows
+            - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+              with:
+                  name: windows-x64
+                  path: |
+                      apps/desktop/dist/squirrel-windows/*.exe
+                      apps/desktop/dist/squirrel-windows/*.nupkg
+                      apps/desktop/dist/squirrel-windows/RELEASES
+                  retention-days: 7
+
+    release:
+        name: Publish GitHub release
+        needs: [meta, verify, web, windows]
+        if: needs.meta.outputs.release == 'true'
+        runs-on: ubuntu-24.04
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+              with:
+                  persist-credentials: false
+            - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+              with:
+                  path: artifacts
+            - name: Create release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  TAG: ${{ needs.meta.outputs.tag }}
+                  VERSION: ${{ needs.meta.outputs.version }}
+                  DRAFT: ${{ github.event_name == 'push' && github.ref_type == 'branch' || github.event_name == 'workflow_dispatch' && inputs.draft }}
+                  SHA: ${{ github.sha }}
+              run: |
+                  NOTES="release-notes/${TAG}.md"
+                  if [ ! -f "$NOTES" ]; then
+                      NOTES=$(mktemp)
+                      echo "Build of oss96/element-web at ${SHA}." > "$NOTES"
+                  fi
+                  mkdir -p upload
+                  cp artifacts/web-tarball/*.tar.gz upload/
+                  for f in artifacts/windows-x64/*; do
+                      name=$(basename "$f")
+                      # Give the installer a fork-specific, space-free name.
+                      case "$name" in
+                          *.exe) cp "$f" "upload/Element-Setup-${VERSION}-x64.exe" ;;
+                          *) cp "$f" "upload/$name" ;;
+                      esac
+                  done
+                  (cd upload && sha256sum * > SHA256SUMS.txt)
+                  ARGS=(--repo "$GITHUB_REPOSITORY" --title "Element (oss96 fork) ${VERSION}" --notes-file "$NOTES" --target "$SHA")
+                  if [ "$DRAFT" = "true" ]; then ARGS+=(--draft); fi
+                  if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+                      gh release upload "$TAG" upload/* --clobber --repo "$GITHUB_REPOSITORY"
+                  else
+                      gh release create "$TAG" "${ARGS[@]}" upload/*
+                  fi

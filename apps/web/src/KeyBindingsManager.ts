@@ -87,32 +87,31 @@ export function isKeyComboMatch(ev: KeyboardEvent | React.KeyboardEvent, combo: 
     // An empty `key` is the "cleared" sentinel: the user has explicitly unbound this
     // shortcut, so no real keypress should ever fire it.
     if (combo.key === "") return false;
-    if (combo.key !== undefined) {
-        // A numpad-flagged binding only fires when the physical numpad press it was recorded
-        // from is what came in. Conversely, an unflagged combo still matches both numpad and
-        // main-row presses, so defaults like ScrollUp on PageUp keep working from either key.
-        if (combo.numpad && !(typeof ev.code === "string" && ev.code.startsWith("Numpad"))) {
-            return false;
-        }
+    // Dropdown, the room context menus and EditableText all forward a mouse ButtonEvent to
+    // getAccessibilityAction cast as a KeyboardEvent, so the event's `key` can genuinely be absent at
+    // runtime. Such an event must match no combo.
+    if (typeof ev.key !== "string") return false;
 
-        // When shift is pressed, letters are returned as upper case chars. In this case do a lower case comparison.
-        // This works for letter combos such as shift + U as well for none letter combos such as shift + Escape.
-        // If shift is not pressed, the toLowerCase conversion can be avoided.
-        //
-        // We also accept a match against the un-shifted physical key (derived from ev.code below),
-        // so Ctrl+Shift+1 recorded as `{key: "1", shiftKey: true}` still fires when the user
-        // produces "!" by holding shift over the digit row.
-        const physical = unshiftedFromCode(ev.code, ev.key);
-        if (ev.shiftKey) {
-            const evLower = ev.key.toLowerCase();
-            const physLower = physical.toLowerCase();
-            const comboLower = combo.key.toLowerCase();
-            if (evLower !== comboLower && physLower !== comboLower) {
-                return false;
-            }
-        } else if (ev.key !== combo.key && physical !== combo.key) {
-            return false;
-        }
+    // A numpad-flagged binding only fires when the physical numpad press it was recorded
+    // from is what came in. Conversely, an unflagged combo still matches both numpad and
+    // main-row presses, so defaults like ScrollUp on PageUp keep working from either key.
+    if (combo.numpad && !(typeof ev.code === "string" && ev.code.startsWith("Numpad"))) {
+        return false;
+    }
+
+    // Letters are reported as upper case chars whenever shift is pressed or caps lock is on, so the
+    // comparison has to be case insensitive. This works for letter combos such as shift + U as well
+    // as for none letter combos such as shift + Escape. No two entries of the `Key` map collide once
+    // lower cased, so this cannot make two distinct shortcuts overlap.
+    //
+    // We also accept a match against the un-shifted physical key (derived from ev.code),
+    // so Ctrl+Shift+1 recorded as `{key: "1", shiftKey: true}` still fires when the user
+    // produces "!" by holding shift over the digit row.
+    const comboLower = combo.key.toLowerCase();
+    const evLower = ev.key.toLowerCase();
+    const physLower = unshiftedFromCode(ev.code, ev.key).toLowerCase();
+    if (evLower !== comboLower && physLower !== comboLower) {
+        return false;
     }
 
     const comboCtrl = combo.ctrlKey ?? false;

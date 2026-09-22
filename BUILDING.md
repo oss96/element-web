@@ -2,7 +2,14 @@
 
 A walkthrough for producing a Windows installer of this fork from a fresh
 checkout. Tested on Windows 11 with Node 22.x and pnpm 11.23.0 (Electron
-44.0.0, electron-builder 26.15.3, as of the 2026-09 upstream sync).
+44.3.0, electron-builder 26.16.1, as of the 2026-09-22 upstream sync).
+
+> **CI alternative.** `.github/workflows/fork-release.yml` runs this same
+> recipe on a GitHub-hosted `windows-2025` runner. Push a tag such as
+> `v1.12.29-fork.1` (with `release-notes/<tag>.md` committed) and it
+> publishes a GitHub release with the unsigned installer, the web tarball
+> and `SHA256SUMS.txt`. Every push to `develop` builds the artefacts
+> without releasing them.
 
 ## Prerequisites
 
@@ -72,7 +79,7 @@ pnpm exec electron-builder --win squirrel
 
 Outputs:
 
-- `apps/desktop/dist/squirrel-windows/Element Setup 1.12.18.exe` — the
+- `apps/desktop/dist/squirrel-windows/Element Setup 1.12.29.exe` — the
   one-click per-user installer (~180 MB).
 - `apps/desktop/dist/win-unpacked/Element.exe` — if you want to run it
   without installing.
@@ -92,7 +99,7 @@ PowerShell), then run without the `--win` flag.
 ## Installation
 
 The Squirrel installer drops Element into `%LocalAppData%\element-desktop\`
-(versioned subdirectory `app-1.12.18\`) — no admin prompt. User data
+(versioned subdirectory `app-1.12.29\`) — no admin prompt. User data
 (login, settings, encryption store) lives in `%AppData%\Element\` and
 persists across reinstalls and version upgrades.
 
