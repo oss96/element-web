@@ -106,7 +106,11 @@ isn't reflected here is invisible to the next session.
   inside `app.asar`), and `release` (only for a pushed `v*-fork.*` tag, a
   manual dispatch with a tag, or a branch push whose commit message contains
   `[release:<tag>]` — the last creates a *draft* release targeting that
-  commit, for sessions whose git proxy cannot push tags). Release notes come from
+  commit, for sessions whose git proxy cannot push tags). An existing release
+  (looked up by tag through the API, so drafts count) is never touched by a
+  branch push — fast-forwarding `develop` onto a released commit is safe; a
+  manual dispatch with `draft: false` publishes an existing draft (creating its
+  tag) and refreshes its assets. Release notes come from
   `release-notes/<tag>.md` at the tagged commit. Runs build-only on pushes to
   `develop` and `claude/**`.
 - `release-notes/` — per-release notes consumed by `fork-release.yml`.

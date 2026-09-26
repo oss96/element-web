@@ -232,6 +232,8 @@ jobs:
                   VERSION: ${{ needs.meta.outputs.version }}
                   DRAFT: ${{ github.event_name == 'push' && github.ref_type == 'branch' || github.event_name == 'workflow_dispatch' && inputs.draft }}
                   SHA: ${{ github.sha }}
+                  EVENT: ${{ github.event_name }}
+                  REF_TYPE: ${{ github.ref_type }}
               run: |
                   NOTES="release-notes/${TAG}.md"
                   if [ ! -f "$NOTES" ]; then
@@ -251,8 +253,23 @@ jobs:
                   (cd upload && sha256sum * > SHA256SUMS.txt)
                   ARGS=(--repo "$GITHUB_REPOSITORY" --title "Element (oss96 fork) ${VERSION}" --notes-file "$NOTES" --target "$SHA")
                   if [ "$DRAFT" = "true" ]; then ARGS+=(--draft); fi
-                  if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-                      gh release upload "$TAG" upload/* --clobber --repo "$GITHUB_REPOSITORY"
-                  else
+                  # Look the release up by tag name through the API so drafts (which have no
+                  # tag yet) are found too.
+                  EXISTING=$(gh api "repos/${GITHUB_REPOSITORY}/releases" --paginate \
+                      --jq ".[] | select(.tag_name == \"${TAG}\") | .id" | head -n1)
+                  if [ -z "$EXISTING" ]; then
                       gh release create "$TAG" "${ARGS[@]}" upload/*
+                  elif [ "$EVENT" = "push" ] && [ "$REF_TYPE" = "branch" ]; then
+                      # e.g. fast-forwarding develop onto an already-released commit whose
+                      # message still carries the [release:<tag>] marker: never touch an
+                      # existing release from a plain branch push.
+                      echo "::notice::Release ${TAG} already exists (id ${EXISTING}); branch push leaves it untouched."
+                  else
+                      # Tag push or manual dispatch: publish a draft when a non-draft release
+                      # was asked for (this creates the tag at the draft's target commit),
+                      # then refresh its assets.
+                      if [ "$DRAFT" != "true" ]; then
+                          gh api -X PATCH "repos/${GITHUB_REPOSITORY}/releases/${EXISTING}" -F draft=false >/dev/null
+                      fi
+                      gh release upload "$TAG" upload/* --clobber --repo "$GITHUB_REPOSITORY"
                   fi
